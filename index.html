@@ -103,6 +103,7 @@ body {
   margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .message.from-me { align-items: flex-end; }
 .message.from-them { align-items: flex-start; }
@@ -111,10 +112,31 @@ body {
   padding: 0.8rem 1rem;
   border-radius: 12px;
   word-wrap: break-word;
+  position: relative;
 }
 .message.from-me .msg-bubble { background: #C9A063; color: white; }
 .message.from-them .msg-bubble { background: white; border: 1px solid #E5E5E5; }
 .msg-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
+.msg-delete {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #FF4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1;
+}
+.message.from-me .msg-delete { left: -30px; }
+.message.from-them .msg-delete { right: -30px; }
+.message:hover .msg-delete { display: block; }
+.msg-deleted { font-style: italic; opacity: 0.5; }
 .input-area {
   background: white;
   padding: 1rem;
@@ -138,6 +160,35 @@ body {
   border: none;
   border-radius: 20px;
   cursor: pointer;
+}
+.quick-replies {
+  background: white;
+  border-top: 1px solid #E5E5E5;
+  padding: 0.6rem 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.quick-reply-btn {
+  padding: 0.4rem 0.8rem;
+  background: #F5F3EE;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.quick-reply-btn:hover { background: #C9A063; color: white; border-color: #C9A063; }
+.quick-reply-toggle {
+  padding: 0.4rem 0.7rem;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 .staff-screen {
   display: grid;
@@ -260,6 +311,14 @@ body {
       <div class="lang-badge" id="selectedLang"></div>
     </div>
     <div class="messages" id="staffMsg"></div>
+    <div class="quick-replies" id="quickReplies">
+      <button class="quick-reply-toggle" onclick="toggleQuickReplies()">⚡ 빠른답변</button>
+      <button class="quick-reply-btn" onclick="quickReply('address')">📍 주소</button>
+      <button class="quick-reply-btn" onclick="quickReply('confirmed')">✅ 예약완료</button>
+      <button class="quick-reply-btn" onclick="quickReply('wechat')">🇨🇳 위챗</button>
+      <button class="quick-reply-btn" onclick="quickReply('paypal')">💳 페이팔</button>
+      <button class="quick-reply-btn" onclick="quickReply('japan')">🇯🇵 일본</button>
+    </div>
     <div class="input-area">
       <textarea class="msg-input" id="staffInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
       <button class="send-btn" onclick="sendStaffMsg()">전송</button>
@@ -284,7 +343,15 @@ const db = firebase.database();
 let currentLang = 'ko';
 let currentRoomId = null;
 let selectedRoomId = null;
-let isSending = false; // 중복 전송 방지 플래그
+let isSending = false;
+
+const quickTemplates = {
+  address: '📍 주소: 서울 강남구 강남대로 102길 33, 2F\nMALLANG Beauty & Photo Studio\n🚇 강남역 11번출구 도보 3분',
+  confirmed: '✅ 예약이 확정되었습니다!\nReservation Confirmed!\n\n날짜/Date: \n시간/Time: \n메뉴/Menu: \n\n감사합니다 Thank you 🙏',
+  wechat: '🇨🇳 WeChat으로도 상담 가능합니다\n微信号: mallangbeauty\n请添加我们的微信',
+  paypal: '💳 PayPal 결제 안내\nPayPal: mallangbeauty@gmail.com\n\n금액/Amount: \n\n결제 후 스크린샷을 보내주세요\nPlease send screenshot after payment',
+  japan: '🇯🇵 日本語対応可能です\n\nご予約はこちらから：\n日付/Date: \n時間/Time: \nメニュー/Menu: \n\nよろしくお願いいたします 🙏'
+};
 
 const T = {
   ko: { formTitle: '정보를 입력해주세요', nameLabel: '이름 *', phoneLabel: '연락처 *', emailLabel: '이메일', submitBtn: '채팅 시작하기', placeholder: '메시지를 입력하세요...' },
@@ -315,6 +382,23 @@ function goStaff() {
   loadCustomerList(); 
 }
 
+function toggleQuickReplies() {
+  const btns = document.querySelectorAll('#quickReplies .quick-reply-btn');
+  btns.forEach(btn => {
+    btn.style.display = btn.style.display === 'none' ? 'inline-block' : 'none';
+  });
+}
+
+function quickReply(key) {
+  if (!selectedRoomId) {
+    alert('고객을 먼저 선택하세요!');
+    return;
+  }
+  const input = document.getElementById('staffInput');
+  input.value = quickTemplates[key] || '';
+  input.focus();
+}
+
 async function submitInfo(e) {
   e.preventDefault();
   const name = document.getElementById('userName').value.trim();
@@ -328,7 +412,6 @@ async function submitInfo(e) {
   
   try {
     const roomId = 'room_' + Date.now();
-    
     await db.ref('rooms/' + roomId).set({
       userName: name,
       userPhone: phone,
@@ -357,7 +440,6 @@ function loadCustomerList() {
       document.getElementById('customerList').innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">아직 고객이 없습니다</div>';
       return;
     }
-    
     const html = Object.entries(rooms)
       .sort((a,b) => b[1].lastMessageTime - a[1].lastMessageTime)
       .map(([id, r]) => `
@@ -370,23 +452,19 @@ function loadCustomerList() {
           <div class="customer-time">${formatTime(r.lastMessageTime)}</div>
         </div>
       `).join('');
-    
     document.getElementById('customerList').innerHTML = html;
   });
 }
 
 function selectCustomer(roomId) {
   selectedRoomId = roomId;
-  
   db.ref('rooms/' + roomId).once('value', snap => {
     const r = snap.val();
     if (!r) return;
-    
     document.getElementById('selectedName').textContent = r.userName || '이름 없음';
     document.getElementById('selectedInfo').textContent = `${r.userPhone || ''} ${r.userEmail ? '• ' + r.userEmail : ''}`;
     document.getElementById('selectedLang').textContent = getFlag(r.userLang) + ' ' + (r.userLang || 'KO').toUpperCase();
   });
-  
   db.ref('rooms/' + roomId + '/unreadCount').set(0);
   listenToMessages('staffMsg', roomId, true);
 }
@@ -395,27 +473,67 @@ function listenToMessages(containerId, roomId, isStaff) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
   
-  // 기존 리스너 제거 후 새로 등록
   db.ref('rooms/' + roomId + '/messages').off('child_added');
+  db.ref('rooms/' + roomId + '/messages').off('child_changed');
   
   db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
     const msg = snap.val();
     if (!msg) return;
-    
+    const msgKey = snap.key;
     const div = document.createElement('div');
     div.className = 'message ' + (msg.isStaff === isStaff ? 'from-me' : 'from-them');
-    div.innerHTML = `
-      <div class="msg-bubble">${escapeHtml(msg.text)}</div>
-      <div class="msg-time">${formatTime(msg.timestamp)}</div>
-    `;
+    div.id = 'msg-' + msgKey;
+    
+    const isMine = msg.isStaff === isStaff;
+    
+    if (msg.deleted) {
+      div.innerHTML = `
+        <div class="msg-bubble msg-deleted">🚫 삭제된 메시지</div>
+        <div class="msg-time">${formatTime(msg.timestamp)}</div>
+      `;
+    } else {
+      const deleteBtn = isMine ? `<button class="msg-delete" onclick="deleteMessage('${roomId}','${msgKey}')" title="삭제">✕</button>` : '';
+      div.innerHTML = `
+        <div class="msg-bubble" style="position:relative;">
+          ${deleteBtn}
+          ${escapeHtml(msg.text)}
+        </div>
+        <div class="msg-time">${formatTime(msg.timestamp)}</div>
+      `;
+    }
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
   });
+  
+  db.ref('rooms/' + roomId + '/messages').on('child_changed', snap => {
+    const msg = snap.val();
+    const msgKey = snap.key;
+    const div = document.getElementById('msg-' + msgKey);
+    if (!div || !msg) return;
+    if (msg.deleted) {
+      div.innerHTML = `
+        <div class="msg-bubble msg-deleted">🚫 삭제된 메시지</div>
+        <div class="msg-time">${formatTime(msg.timestamp)}</div>
+      `;
+    }
+  });
+}
+
+async function deleteMessage(roomId, msgKey) {
+  if (!confirm('이 메시지를 삭제하시겠습니까?')) return;
+  try {
+    await db.ref('rooms/' + roomId + '/messages/' + msgKey).update({
+      deleted: true,
+      text: ''
+    });
+  } catch (error) {
+    console.error('Delete error:', error);
+    alert('삭제 실패: ' + error.message);
+  }
 }
 
 async function sendCustomerMsg() {
-  if (isSending) return; // 중복 방지
-  
+  if (isSending) return;
   const input = document.getElementById('customerInput');
   const text = input.value.trim();
   if (!text || !currentRoomId) return;
@@ -426,27 +544,20 @@ async function sendCustomerMsg() {
   
   try {
     await db.ref('rooms/' + currentRoomId + '/messages').push({
-      text: text,
-      isStaff: false,
-      timestamp: Date.now()
+      text: text, isStaff: false, timestamp: Date.now()
     });
-    
     await db.ref('rooms/' + currentRoomId).update({
-      lastMessage: text,
-      lastMessageTime: Date.now(),
+      lastMessage: text, lastMessageTime: Date.now(),
       unreadCount: firebase.database.ServerValue.increment(1)
     });
   } catch (error) {
     console.error('Error:', error);
     alert('메시지 전송 실패: ' + error.message);
-  } finally {
-    isSending = false;
-  }
+  } finally { isSending = false; }
 }
 
 async function sendStaffMsg() {
-  if (isSending) return; // 중복 방지
-  
+  if (isSending) return;
   const input = document.getElementById('staffInput');
   const text = input.value.trim();
   if (!text || !selectedRoomId) {
@@ -460,21 +571,15 @@ async function sendStaffMsg() {
   
   try {
     await db.ref('rooms/' + selectedRoomId + '/messages').push({
-      text: text,
-      isStaff: true,
-      timestamp: Date.now()
+      text: text, isStaff: true, timestamp: Date.now()
     });
-    
     await db.ref('rooms/' + selectedRoomId).update({
-      lastMessage: text,
-      lastMessageTime: Date.now()
+      lastMessage: text, lastMessageTime: Date.now()
     });
   } catch (error) {
     console.error('Error:', error);
     alert('메시지 전송 실패: ' + error.message);
-  } finally {
-    isSending = false;
-  }
+  } finally { isSending = false; }
 }
 
 function searchCustomers() {
@@ -485,18 +590,15 @@ function searchCustomers() {
   });
 }
 
-// 한글 IME 중복 전송 방지: isComposing 체크 추가
 document.getElementById('customerInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault();
-    sendCustomerMsg();
+    e.preventDefault(); sendCustomerMsg();
   }
 });
 
 document.getElementById('staffInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault();
-    sendStaffMsg();
+    e.preventDefault(); sendStaffMsg();
   }
 });
 

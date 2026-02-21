@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MALLANG Beauty Chat</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #FAF9F6;
+  overflow: hidden;
+}
+.screen { display: none; height: 100vh; }
+.screen.active { display: flex; }
+.lang-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.logo { font-size: 2.5rem; font-weight: 300; letter-spacing: 0.3em; margin-bottom: 1rem; }
+.subtitle { color: #666; margin-bottom: 3rem; }
+.lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 400px; width: 100%; }
+.lang-btn {
+  padding: 1.5rem;
+  border: 2px solid #E5E5E5;
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+.lang-btn:hover { border-color: #C9A063; transform: translateY(-2px); }
+.staff-login {
+  margin-top: 2rem;
+  padding: 0.8rem 2rem;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.info-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.info-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.info-form h2 { font-size: 1.5rem; margin-bottom: 1.5rem; text-align: center; }
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; }
+.form-group input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #C9A063;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+.customer-screen { flex-direction: column; }
+.chat-header {
+  background: white;
+  padding: 1rem;
+  border-bottom: 1px solid #E5E5E5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chat-header h3 { font-size: 1.1rem; }
+.lang-badge {
+  padding: 0.4rem 0.8rem;
+  background: #F5F3EE;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+.message {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.message.from-me { align-items: flex-end; }
+.message.from-them { align-items: flex-start; }
+.msg-bubble {
+  max-width: 70%;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  word-wrap: break-word;
+}
+.message.from-me .msg-bubble { background: #C9A063; color: white; }
+.message.from-them .msg-bubble { background: white; border: 1px solid #E5E5E5; }
+.msg-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
+.input-area {
+  background: white;
+  padding: 1rem;
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  gap: 0.8rem;
+}
+.msg-input {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid #E5E5E5;
+  border-radius: 20px;
+  font-size: 1rem;
+  resize: none;
+  font-family: inherit;
+}
+.send-btn {
+  padding: 0.8rem 1.5rem;
+  background: #C9A063;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.staff-screen {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+.customer-list {
+  background: white;
+  border-right: 1px solid #E5E5E5;
+  display: flex;
+  flex-direction: column;
+}
+.list-header { padding: 1rem; border-bottom: 1px solid #E5E5E5; }
+.list-header h2 { font-size: 1.2rem; margin-bottom: 0.8rem; }
+.search-box {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+}
+.customer-items { flex: 1; overflow-y: auto; }
+.customer-item {
+  padding: 1rem;
+  border-bottom: 1px solid #E5E5E5;
+  cursor: pointer;
+}
+.customer-item:hover { background: #F9F9F9; }
+.customer-item.active { background: #F5F3EE; border-left: 3px solid #C9A063; }
+.customer-name {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.unread { 
+  background: #FF4444; 
+  color: white; 
+  padding: 0.2rem 0.5rem; 
+  border-radius: 10px; 
+  font-size: 0.7rem; 
+}
+.customer-preview { 
+  font-size: 0.85rem; 
+  color: #666; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+.customer-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
+@media (max-width: 768px) {
+  .staff-screen { grid-template-columns: 1fr; }
+  .customer-list { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="screen active lang-screen" id="langScreen">
+  <div class="logo">MALLANG</div>
+  <div class="subtitle">Premium Beauty & Photo Studio</div>
+  <div class="lang-grid">
+    <button class="lang-btn" onclick="selectLang('ko')">🇰🇷 한국어</button>
+    <button class="lang-btn" onclick="selectLang('en')">🌐 English</button>
+    <button class="lang-btn" onclick="selectLang('zh')">🇨🇳 中文</button>
+    <button class="lang-btn" onclick="selectLang('ja')">🇯🇵 日本語</button>
+    <button class="lang-btn" onclick="selectLang('th')">🇹🇭 ภาษาไทย</button>
+  </div>
+  <button class="staff-login" onclick="goStaff()">🔐 스태프 로그인</button>
+</div>
+
+<div class="screen info-screen" id="infoScreen">
+  <div class="logo" style="margin-bottom: 2rem;">MALLANG</div>
+  <form class="info-form" onsubmit="submitInfo(event)">
+    <h2 id="formTitle">정보를 입력해주세요</h2>
+    <div class="form-group">
+      <label id="nameLabel">이름 *</label>
+      <input type="text" id="userName" required>
+    </div>
+    <div class="form-group">
+      <label id="phoneLabel">연락처 *</label>
+      <input type="tel" id="userPhone" required>
+    </div>
+    <div class="form-group">
+      <label id="emailLabel">이메일</label>
+      <input type="email" id="userEmail">
+    </div>
+    <button type="submit" class="submit-btn" id="submitBtn">채팅 시작하기</button>
+  </form>
+</div>
+
+<div class="screen customer-screen" id="customerScreen">
+  <div class="chat-header">
+    <div>
+      <h3>MALLANG Beauty</h3>
+      <p style="font-size: 0.85rem; color: #666;">상담원이 곧 응답합니다</p>
+    </div>
+    <div class="lang-badge" id="userLang"></div>
+  </div>
+  <div class="messages" id="customerMsg"></div>
+  <div class="input-area">
+    <textarea class="msg-input" id="customerInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
+    <button class="send-btn" onclick="sendCustomerMsg()">전송</button>
+  </div>
+</div>
+
+<div class="screen staff-screen" id="staffScreen">
+  <div class="customer-list">
+    <div class="list-header">
+      <h2>고객 목록</h2>
+      <input type="text" class="search-box" id="searchBox" placeholder="검색..." oninput="searchCustomers()">
+    </div>
+    <div class="customer-items" id="customerList"></div>
+  </div>
+  <div style="display: flex; flex-direction: column;">
+    <div class="chat-header">
+      <div>
+        <h3 id="selectedName">고객을 선택하세요</h3>
+        <p style="font-size: 0.85rem; color: #666;" id="selectedInfo"></p>
+      </div>
+      <div class="lang-badge" id="selectedLang"></div>
+    </div>
+    <div class="messages" id="staffMsg"></div>
+    <div class="input-area">
+      <textarea class="msg-input" id="staffInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
+      <button class="send-btn" onclick="sendStaffMsg()">전송</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCeouM3_9JCWaKTGEeQFrD3ZikAgpheJQ8",
+  authDomain: "mallang-chat.firebaseapp.com",
+  databaseURL: "https://mallang-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mallang-chat",
+  storageBucket: "mallang-chat.firebasestorage.app",
+  messagingSenderId: "224793274849",
+  appId: "1:224793274849:web:d97f17bf3c410f0ed88aa0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentLang = 'ko';
+let currentRoomId = null;
+let selectedRoomId = null;
+
+const T = {
+  ko: { formTitle: '정보를 입력해주세요', nameLabel: '이름 *', phoneLabel: '연락처 *', emailLabel: '이메일', submitBtn: '채팅 시작하기', placeholder: '메시지를 입력하세요...' },
+  en: { formTitle: 'Please enter your information', nameLabel: 'Name *', phoneLabel: 'Phone *', emailLabel: 'Email', submitBtn: 'Start Chat', placeholder: 'Type your message...' },
+  zh: { formTitle: '请输入您的信息', nameLabel: '姓名 *', phoneLabel: '联系方式 *', emailLabel: '邮箱', submitBtn: '开始聊天', placeholder: '请输入消息...' },
+  ja: { formTitle: '情報を入力してください', nameLabel: 'お名前 *', phoneLabel: '連絡先 *', emailLabel: 'メール', submitBtn: 'チャット開始', placeholder: 'メッセージを入力...' },
+  th: { formTitle: 'กรุณากรอกข้อมูล', nameLabel: 'ชื่อ *', phoneLabel: 'เบอร์โทร *', emailLabel: 'อีเมล', submitBtn: 'เริ่มแชท', placeholder: 'พิมพ์ข้อความ...' }
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function selectLang(lang) {
+  currentLang = lang;
+  const t = T[lang];
+  document.getElementById('formTitle').textContent = t.formTitle;
+  document.getElementById('nameLabel').textContent = t.nameLabel;
+  document.getElementById('phoneLabel').textContent = t.phoneLabel;
+  document.getElementById('emailLabel').textContent = t.emailLabel;
+  document.getElementById('submitBtn').textContent = t.submitBtn;
+  showScreen('infoScreen');
+}
+
+function goStaff() {
+  showScreen('staffScreen');
+  loadCustomerList();
+}
+
+async function submitInfo(e) {
+  e.preventDefault();
+  const name = document.getElementById('userName').value.trim();
+  const phone = document.getElementById('userPhone').value.trim();
+  const email = document.getElementById('userEmail').value.trim();
+  
+  if (!name || !phone) {
+    alert('이름과 연락처는 필수입니다!');
+    return;
+  }
+  
+  try {
+    const roomId = 'room_' + Date.now();
+    
+    await db.ref('rooms/' + roomId).set({
+      userName: name,
+      userPhone: phone,
+      userEmail: email,
+      userLang: currentLang,
+      lastMessage: '',
+      lastMessageTime: Date.now(),
+      unreadCount: 0
+    });
+    
+    currentRoomId = roomId;
+    document.getElementById('userLang').textContent = getFlag(currentLang) + ' ' + currentLang.toUpperCase();
+    document.getElementById('customerInput').placeholder = T[currentLang].placeholder;
+    showScreen('customerScreen');
+    listenToMessages('customerMsg', roomId, false);
+  } catch (error) {
+    console.error('Error:', error);
+    alert('오류가 발생했습니다: ' + error.message);
+  }
+}
+
+function loadCustomerList() {
+  db.ref('rooms').on('value', snap => {
+    const rooms = snap.val();
+    if (!rooms) {
+      document.getElementById('customerList').innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">아직 고객이 없습니다</div>';
+      return;
+    }
+    
+    const html = Object.entries(rooms)
+      .sort((a,b) => b[1].lastMessageTime - a[1].lastMessageTime)
+      .map(([id, r]) => `
+        <div class="customer-item ${selectedRoomId === id ? 'active' : ''}" onclick="selectCustomer('${id}')">
+          <div class="customer-name">
+            ${r.userName || '이름 없음'}
+            ${r.unreadCount > 0 ? `<span class="unread">${r.unreadCount}</span>` : ''}
+          </div>
+          <div class="customer-preview">${escapeHtml(r.lastMessage || '새로운 대화')}</div>
+          <div class="customer-time">${formatTime(r.lastMessageTime)}</div>
+        </div>
+      `).join('');
+    
+    document.getElementById('customerList').innerHTML = html;
+  });
+}
+
+function selectCustomer(roomId) {
+  selectedRoomId = roomId;
+  
+  db.ref('rooms/' + roomId).once('value', snap => {
+    const r = snap.val();
+    if (!r) return;
+    
+    document.getElementById('selectedName').textContent = r.userName || '이름 없음';
+    document.getElementById('selectedInfo').textContent = `${r.userPhone || ''} ${r.userEmail ? '• ' + r.userEmail : ''}`;
+    document.getElementById('selectedLang').textContent = getFlag(r.userLang) + ' ' + (r.userLang || 'KO').toUpperCase();
+  });
+  
+  db.ref('rooms/' + roomId + '/unreadCount').set(0);
+  listenToMessages('staffMsg', roomId, true);
+}
+
+function listenToMessages(containerId, roomId, isStaff) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  
+  db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
+    const msg = snap.val();
+    if (!msg) return;
+    
+    const div = document.createElement('div');
+    div.className = 'message ' + (msg.isStaff === isStaff ? 'from-me' : 'from-them');
+    div.innerHTML = `
+      <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+      <div class="msg-time">${formatTime(msg.timestamp)}</div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+async function sendCustomerMsg() {
+  const input = document.getElementById('customerInput');
+  const text = input.value.trim();
+  if (!text || !currentRoomId) return;
+  
+  try {
+    await db.ref('rooms/' + currentRoomId + '/messages').push({
+      text: text,
+      isStaff: false,
+      timestamp: Date.now()
+    });
+    
+    await db.ref('rooms/' + currentRoomId).update({
+      lastMessage: text,
+      lastMessageTime: Date.now(),
+      unreadCount: firebase.database.ServerValue.increment(1)
+    });
+    
+    input.value = '';
+    input.style.height = 'auto';
+  } catch (error) {
+    console.error('Error:', error);
+    alert('메시지 전송 실패: ' + error.message);
+  }
+}
+
+async function sendStaffMsg() {
+  const input = document.getElementById('staffInput');
+  const text = input.value.trim();
+  if (!text || !selectedRoomId) {
+    alert('고객을 먼저 선택하세요!');
+    return;
+  }
+  
+  try {
+    await db.ref('rooms/' + selectedRoomId + '/messages').push({
+      text: text,
+      isStaff: true,
+      timestamp: Date.now()
+    });
+    
+    await db.ref('rooms/' + selectedRoomId).update({
+      lastMessage: text,
+      lastMessageTime: Date.now()
+    });
+    
+    input.value = '';
+    input.style.height = 'auto';
+  } catch (error) {
+    console.error('Error:', error);
+    alert('메시지 전송 실패: ' + error.message);
+  }
+}
+
+function searchCustomers() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  document.querySelectorAll('.customer-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(q) ? 'block' : 'none';
+  });
+}
+
+document.getElementById('customerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendCustomerMsg();
+  }
+});
+
+document.getElementById('staffInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendStaffMsg();
+  }
+});
+
+function getFlag(lang) {
+  const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭' };
+  return flags[lang] || '🌐';
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return '방금';
+  if (diff < 3600000) return Math.floor(diff/60000) + '분 전';
+  if (diff < 86400000) return Math.floor(diff/3600000) + '시간 전';
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML.replace(/\n/g, '<br>');
+}
+</script>
+</body>
+</html>

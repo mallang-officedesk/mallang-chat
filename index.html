@@ -284,6 +284,7 @@ const db = firebase.database();
 let currentLang = 'ko';
 let currentRoomId = null;
 let selectedRoomId = null;
+let isSending = false; // 중복 전송 방지 플래그
 
 const T = {
   ko: { formTitle: '정보를 입력해주세요', nameLabel: '이름 *', phoneLabel: '연락처 *', emailLabel: '이메일', submitBtn: '채팅 시작하기', placeholder: '메시지를 입력하세요...' },
@@ -394,6 +395,9 @@ function listenToMessages(containerId, roomId, isStaff) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
   
+  // 기존 리스너 제거 후 새로 등록
+  db.ref('rooms/' + roomId + '/messages').off('child_added');
+  
   db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
     const msg = snap.val();
     if (!msg) return;
@@ -410,9 +414,15 @@ function listenToMessages(containerId, roomId, isStaff) {
 }
 
 async function sendCustomerMsg() {
+  if (isSending) return; // 중복 방지
+  
   const input = document.getElementById('customerInput');
   const text = input.value.trim();
   if (!text || !currentRoomId) return;
+  
+  isSending = true;
+  input.value = '';
+  input.style.height = 'auto';
   
   try {
     await db.ref('rooms/' + currentRoomId + '/messages').push({
@@ -426,22 +436,27 @@ async function sendCustomerMsg() {
       lastMessageTime: Date.now(),
       unreadCount: firebase.database.ServerValue.increment(1)
     });
-    
-    input.value = '';
-    input.style.height = 'auto';
   } catch (error) {
     console.error('Error:', error);
     alert('메시지 전송 실패: ' + error.message);
+  } finally {
+    isSending = false;
   }
 }
 
 async function sendStaffMsg() {
+  if (isSending) return; // 중복 방지
+  
   const input = document.getElementById('staffInput');
   const text = input.value.trim();
   if (!text || !selectedRoomId) {
     alert('고객을 먼저 선택하세요!');
     return;
   }
+  
+  isSending = true;
+  input.value = '';
+  input.style.height = 'auto';
   
   try {
     await db.ref('rooms/' + selectedRoomId + '/messages').push({
@@ -454,12 +469,11 @@ async function sendStaffMsg() {
       lastMessage: text,
       lastMessageTime: Date.now()
     });
-    
-    input.value = '';
-    input.style.height = 'auto';
   } catch (error) {
     console.error('Error:', error);
     alert('메시지 전송 실패: ' + error.message);
+  } finally {
+    isSending = false;
   }
 }
 
@@ -471,15 +485,16 @@ function searchCustomers() {
   });
 }
 
+// 한글 IME 중복 전송 방지: isComposing 체크 추가
 document.getElementById('customerInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
     sendCustomerMsg();
   }
 });
 
 document.getElementById('staffInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
     sendStaffMsg();
   }

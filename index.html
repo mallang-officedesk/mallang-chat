@@ -436,7 +436,7 @@ body {
     <button class="lang-btn" onclick="selectLang('zh')">🇨🇳 中文</button>
     <button class="lang-btn" onclick="selectLang('ja')">🇯🇵 日本語</button>
     <button class="lang-btn" onclick="selectLang('th')">🇹🇭 ภาษาไทย</button>
-    <button class="lang-btn" onclick="selectLang('other')">✦ Other<br><span style="font-size:0.8rem;color:#999;">Auto detect</span></button>
+    <button class="lang-btn" onclick="selectLang('vi')">🇻🇳 Tiếng Việt</button>
   </div>
 
 </div>
@@ -600,7 +600,8 @@ const T = {
   en: { placeholder: 'Type your message...', subtitle: 'Our team will reply shortly' },
   zh: { placeholder: '请输入消息...', subtitle: '我们的团队会尽快回复' },
   ja: { placeholder: 'メッセージを入力...', subtitle: 'スタッフがすぐに対応します' },
-  th: { placeholder: 'พิมพ์ข้อความ...', subtitle: 'ทีมงานจะตอบกลับในเร็วๆ นี้' }
+  th: { placeholder: 'พิมพ์ข้อความ...', subtitle: 'ทีมงานจะตอบกลับในเร็วๆ นี้' },
+  vi: { placeholder: 'Nhập tin nhắn...', subtitle: 'Nhân viên sẽ phản hồi sớm' }
 };
 
 // === Auth 상태 감지 ===
@@ -1039,7 +1040,7 @@ document.getElementById('signupPw').addEventListener('keydown', e => {
 
 // === 유틸 ===
 function getFlag(lang) {
-  const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭', other: '✦' };
+  const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭', vi: '🇻🇳' };
   return flags[lang] || '🌐';
 }
 

@@ -388,6 +388,7 @@ body {
     <button class="lang-btn" onclick="selectLang('zh')">🇨🇳 中文</button>
     <button class="lang-btn" onclick="selectLang('ja')">🇯🇵 日本語</button>
     <button class="lang-btn" onclick="selectLang('th')">🇹🇭 ภาษาไทย</button>
+    <button class="lang-btn" onclick="selectLang('other')">✦ Other<br><span style="font-size:0.8rem;color:#999;">Auto detect</span></button>
   </div>
 
 </div>
@@ -984,7 +985,7 @@ document.getElementById('signupPw').addEventListener('keydown', e => {
 
 // === 유틸 ===
 function getFlag(lang) {
-  const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭' };
+  const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭', other: '✦' };
   return flags[lang] || '🌐';
 }
 

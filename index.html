@@ -791,7 +791,8 @@ function quickReply(key) {
   autoResize(input);
 }
 
-// === 스태프: 고객 리스트 === {
+// === 스태프: 고객 리스트 ===
+function loadCustomerList() {
   db.ref('rooms').on('value', snap => {
     const rooms = snap.val();
     if (!rooms) {

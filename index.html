@@ -35,15 +35,7 @@ body {
   transition: all 0.3s;
 }
 .lang-btn:hover { border-color: #C9A063; transform: translateY(-2px); }
-.staff-login {
-  margin-top: 2rem;
-  padding: 0.8rem 2rem;
-  background: #666;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
+
 .auth-screen {
   flex-direction: column;
   align-items: center;
@@ -175,6 +167,10 @@ body {
   font-size: 1rem;
   resize: none;
   font-family: inherit;
+  min-height: 2.5rem;
+  max-height: 7.5rem;
+  overflow-y: auto;
+  line-height: 1.4;
 }
 .send-btn {
   padding: 0.8rem 1.5rem;
@@ -325,7 +321,7 @@ body {
     <button class="lang-btn" onclick="selectLang('ja')">🇯🇵 日本語</button>
     <button class="lang-btn" onclick="selectLang('th')">🇹🇭 ภาษาไทย</button>
   </div>
-  <button class="staff-login" onclick="goStaff()">🔐 스태프 로그인</button>
+
 </div>
 
 <!-- 로그인 -->
@@ -460,7 +456,13 @@ const T = {
 };
 
 // === Auth 상태 감지 ===
+const isStaffMode = new URLSearchParams(window.location.search).has('staff');
+
 auth.onAuthStateChanged(async (user) => {
+  if (isStaffMode) {
+    goStaff();
+    return;
+  }
   if (user) {
     // 로그인 상태 — 기존 채팅방 찾기
     currentUser = user;
@@ -503,9 +505,16 @@ function selectLang(lang) {
   }
 }
 
+const STAFF_PW = 'mallang1347';
+
 function goStaff() {
-  showScreen('staffScreen');
-  loadCustomerList();
+  const pw = prompt('스태프 비밀번호:');
+  if (pw === STAFF_PW) {
+    showScreen('staffScreen');
+    loadCustomerList();
+  } else if (pw !== null) {
+    alert('비밀번호가 틀렸습니다.');
+  }
 }
 
 // === 회원가입 ===
@@ -753,7 +762,7 @@ function listenToMessages(containerId, roomId, isStaff) {
         <div class="msg-time">${formatTime(msg.timestamp)}</div>
       `;
     } else {
-      const deleteBtn = isMine ? `<button class="msg-delete" onclick="deleteMessage('${roomId}','${msgKey}')" title="삭제">✕</button>` : '';
+      const deleteBtn = (isMine && isStaff) ? `<button class="msg-delete" onclick="deleteMessage('${roomId}','${msgKey}')" title="삭제">✕</button>` : '';
       div.innerHTML = `
         <div class="msg-bubble" style="position:relative;">
           ${deleteBtn}
@@ -846,6 +855,15 @@ function searchCustomers() {
     item.style.display = text.includes(q) ? 'block' : 'none';
   });
 }
+
+// === 텍스트 입력창 자동 크기 조절 ===
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+document.getElementById('customerInput').addEventListener('input', function() { autoResize(this); });
+document.getElementById('staffInput').addEventListener('input', function() { autoResize(this); });
 
 // === 키보드 ===
 document.getElementById('customerInput').addEventListener('keydown', e => {

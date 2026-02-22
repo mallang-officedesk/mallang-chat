@@ -163,11 +163,13 @@ body {
   .menu-sidebar {
     display: none;
     position: fixed;
-    top: 0; left: 0;
+    top: 0; left: 0; bottom: 0;
     width: 85vw;
-    height: 100vh;
+    height: 100%;
+    height: 100dvh;
     z-index: 1000;
     box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
   .menu-sidebar.mobile-open {
     display: flex;
@@ -176,7 +178,8 @@ body {
     display: none;
     position: fixed;
     top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    width: 100vw; height: 100%;
+    height: 100dvh;
     background: rgba(0,0,0,0.3);
     z-index: 999;
   }
@@ -1172,6 +1175,7 @@ const menuData = {
 <p><b>이름(영문) :</b></p>
 <p><b>인원 :</b></p>
 <p><b>원하시는 서비스 :</b></p>
+<p><b>결제 방법 :</b></p>
 <p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
 <button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">📋 복사하기 (Copy)</button>`
 };
@@ -1181,7 +1185,8 @@ function copyBookingForm() {
 시간 :
 이름(영문) :
 인원 :
-원하시는 서비스 :`;
+원하시는 서비스 :
+결제 방법 :`;
   navigator.clipboard.writeText(text).then(() => {
     event.target.textContent = '✅ 복사완료!';
     setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);

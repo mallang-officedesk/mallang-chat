@@ -258,7 +258,8 @@ body {
   color: #666; 
   white-space: nowrap; 
   overflow: hidden; 
-  text-overflow: ellipsis; 
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 .customer-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
 .loading-screen {
@@ -707,7 +708,7 @@ function loadCustomerList() {
             ${r.userName || '이름 없음'}
             ${r.unreadCount > 0 ? `<span class="unread">${r.unreadCount}</span>` : ''}
           </div>
-          <div class="customer-preview">${escapeHtml(r.lastMessage || '새로운 대화')}</div>
+          <div class="customer-preview">${previewText(r.lastMessage)}</div>
           <div class="customer-time">${formatTime(r.lastMessageTime)}</div>
         </div>
       `).join('');
@@ -881,6 +882,13 @@ function formatTime(ts) {
   if (diff < 3600000) return Math.floor(diff/60000) + '분 전';
   if (diff < 86400000) return Math.floor(diff/3600000) + '시간 전';
   return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function previewText(text) {
+  if (!text) return '새로운 대화';
+  let t = text.replace(/\[WECHAT_QR\]/g, '🇨🇳 위챗페이').replace(/\[DIRECTIONS_BTN\]/g, '').replace(/\n/g, ' ').trim();
+  if (t.length > 40) t = t.substring(0, 40) + '...';
+  return escapeHtml(t);
 }
 
 function escapeHtml(text) {

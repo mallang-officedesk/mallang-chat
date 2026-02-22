@@ -93,7 +93,62 @@ body {
   margin-bottom: 1rem;
   display: none;
 }
-.customer-screen { flex-direction: column; }
+.customer-screen { flex-direction: row; }
+.menu-sidebar {
+  width: 220px;
+  background: white;
+  border-right: 1px solid #E5E5E5;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.menu-tabs {
+  display: flex;
+  flex-direction: column;
+}
+.menu-tab {
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #F0F0F0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.menu-tab:hover { background: #F9F7F3; }
+.menu-tab.active { background: #F5F3EE; border-left: 3px solid #C9A063; font-weight: 600; }
+.menu-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.2rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  background: #FDFCFA;
+}
+.menu-content h4 {
+  color: #C9A063;
+  margin: 1rem 0 0.4rem;
+  font-size: 0.92rem;
+}
+.menu-content h4:first-child { margin-top: 0; }
+.menu-content .price-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+}
+.menu-content .price-row span:last-child { color: #C9A063; font-weight: 600; }
+.menu-content .note { font-size: 0.8rem; color: #999; margin-top: 0.5rem; }
+.menu-content .divider { border-top: 1px dashed #E5E5E5; margin: 0.8rem 0; }
+.customer-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .menu-sidebar { display: none; }
+}
 .chat-header {
   background: white;
   padding: 1rem;
@@ -379,20 +434,32 @@ body {
 
 <!-- 고객 채팅 -->
 <div class="screen customer-screen" id="customerScreen">
-  <div class="chat-header">
-    <div>
-      <h3>MALLANG Beauty</h3>
-      <p style="font-size: 0.85rem; color: #666;" id="customerSubtitle">상담원이 곧 응답합니다</p>
+  <div class="menu-sidebar">
+    <div class="menu-tabs">
+      <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
+      <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
+      <div class="menu-tab" onclick="showMenu('spa')">🧖 스파</div>
+      <div class="menu-tab" onclick="showMenu('photo')">📷 포토</div>
+      <div class="menu-tab" onclick="showMenu('booking')">📅 예약하기</div>
     </div>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <div class="lang-badge" id="userLang"></div>
-      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
-    </div>
+    <div class="menu-content" id="menuContent"></div>
   </div>
-  <div class="messages" id="customerMsg"></div>
-  <div class="input-area">
-    <textarea class="msg-input" id="customerInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
-    <button class="send-btn" onclick="sendCustomerMsg()">전송</button>
+  <div class="customer-chat-area">
+    <div class="chat-header">
+      <div>
+        <h3>MALLANG Beauty</h3>
+        <p style="font-size: 0.85rem; color: #666;" id="customerSubtitle">상담원이 곧 응답합니다</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="lang-badge" id="userLang"></div>
+        <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+    <div class="messages" id="customerMsg"></div>
+    <div class="input-area">
+      <textarea class="msg-input" id="customerInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
+      <button class="send-btn" onclick="sendCustomerMsg()">전송</button>
+    </div>
   </div>
 </div>
 
@@ -929,6 +996,130 @@ function previewText(text) {
   if (t.length > 40) t = t.substring(0, 40) + '...';
   return escapeHtml(t);
 }
+
+// === 메뉴 사이드바 ===
+const menuData = {
+  makeup: `<h4>💄 [ Lady - Make up ]</h4>
+<div class="price-row"><span>A (daily)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (idol, photo shoot)</span><span>₩110,000</span></div>
+
+<h4>🤵 [ Man - Make up ]</h4>
+<div class="price-row"><span>A (daily)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (idol, photo shoot)</span><span>₩90,000</span></div>
+
+<h4>📚 [ Make up Lesson ]</h4>
+<div class="price-row"><span>90 min</span><span>₩350,000</span></div>
+
+<div class="divider"></div>
+
+<h4>✨ Hair Styling (Setting)</h4>
+<p class="note">(+ hair wash +₩20,000)</p>
+<div class="price-row"><span>[ Lady ] A (daily)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (semi up style)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (up style)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ Man ]</span><span>₩40,000</span></div>
+
+<p class="note">* Please decide the style after consulting with the designer.<br>*デザイナーとご相談の上、スタイルをお決めください。</p>
+
+<div class="divider"></div>
+
+<h4>⏰ Early Charge (before 10:00 AM)</h4>
+<div class="price-row"><span>AM 9:00 Hair/Makeup</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 Hair/Makeup</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 Hair/Makeup</span><span>+₩30,000</span></div>`,
+
+  hair: `<h4>✂️ Cut</h4>
+<div class="price-row"><span>Lady</span><span>₩55,000</span></div>
+<div class="price-row"><span>Man</span><span>₩40,000</span></div>
+
+<h4>🌀 Perm</h4>
+<div class="price-row"><span>Lady</span><span>₩220,000 ~</span></div>
+
+<h4>🎨 Color</h4>
+<div class="price-row"><span>Lady</span><span>₩140,000 ~</span></div>
+
+<h4>💫 Extension</h4>
+<div class="price-row"><span>Normal</span><span>₩400,000 ~</span></div>
+<div class="price-row"><span>Premium</span><span>₩600,000 ~</span></div>`,
+
+  spa: `<h4>🧖 Head Spa</h4>
+<div class="price-row"><span>30 min</span><span>₩70,000</span></div>
+<div class="price-row"><span>60 min</span><span>₩130,000</span></div>
+
+<h4>💆 Hair Treatment</h4>
+<div class="price-row"><span>60 min</span><span>₩140,000 ~</span></div>
+
+<h4>🧖‍♀️ Head Spa + Treatment</h4>
+<div class="price-row"><span>90 min</span><span>₩230,000</span></div>`,
+
+  photo: `<h4>📷 프리미엄 증명사진</h4>
+<div class="price-row"><span>30 min</span><span>₩60,000</span></div>
+<p><a href="https://instagram.com/mallang__id" target="_blank" class="msg-link">@mallang__id</a></p>
+<p>• 신분증, 학생증, 사원증, 기념용 사진</p>
+<p>• 배경색 선택 가능</p>
+<p>• 정면 또는 상반신 측면 촬영만 가능</p>
+<p>• 촬영 사진 중 1장 선택 → 1:1 리터칭 포함</p>
+<p>• 추가 리터칭: 1장당 ₩40,000</p>
+<p><b>인화 포함</b></p>
+<p>• 5.5 × 7.5 cm (1매)</p>
+<p>• 5.5 × 8 cm (2매)</p>
+<p>• 3.5 × 4.5 cm (8매)</p>
+
+<div class="divider"></div>
+
+<h4>📸 프로필 촬영</h4>
+<div class="price-row"><span>60 min</span><span>₩120,000</span></div>
+<p><a href="https://instagram.com/mallang__photo" target="_blank" class="msg-link">@mallang__photo</a></p>
+<p>• 4가지 무드 중 1가지 선택, 자유 포즈</p>
+<p>• 상반신 및 전신 촬영</p>
+<p>• 원본 전체 이메일 전달 (리터칭 1장 포함)</p>
+<p>• 리터칭 소요 기간: 7~14일</p>
+<p>• 컨셉 1개당 의상 1벌</p>
+<p>• 추가 리터칭: 1장당 ₩40,000</p>
+<p class="note">*의상은 직접 갖고 오셔야 합니다</p>
+
+<div class="divider"></div>
+
+<h4>💑 커플 프로필 촬영</h4>
+<div class="price-row"><span>60 min</span><span>₩220,000</span></div>
+<p>• 포토 작가와 무드 및 포즈 상담</p>
+<p>• 상반신 및 전신 촬영</p>
+<p>• 원본 전체 이메일 전달 (리터칭 1장 포함)</p>
+<p>• 리터칭 소요 기간: 7~14일</p>
+<p>• 컨셉 1개당 의상 1벌</p>
+<p>• 추가 리터칭: 1장당 ₩40,000</p>
+<p class="note">*의상은 직접 갖고 오셔야 합니다</p>`,
+
+  booking: `<h4>📅 예약 안내 / Reservation</h4>
+<p>• 먼저 고객님의 정보가 필요합니다.</p>
+<p>• 예약금 결제 후 예약이 확정됩니다.</p>
+<p>• 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.</p>
+<p>• 1시간 이내에 예약금 결제가 가능하시면 아래 내용을 작성해 주세요.</p>
+<p>• 총금액에서 예약금을 제외한 나머지 금액을 현장에서 결제합니다.</p>
+<p>• 예약금 결제 후 스크린샷을 꼭 이곳에 남겨주세요. 그렇지 못할 경우 예약이 확정되지 않습니다.</p>
+
+<div class="divider"></div>
+
+<p><b>날짜 :</b> 월 / 일 ( 요일 )</p>
+<p><b>시간 :</b></p>
+<p><b>이름(영문) :</b></p>
+<p><b>인원 :</b></p>
+<p><b>원하시는 서비스 :</b></p>
+<p><b>예약금 결제 방법 :</b></p>
+<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>`
+};
+
+function showMenu(key) {
+  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('menuContent').innerHTML = menuData[key] || '';
+}
+
+// 초기 메뉴 로드
+document.addEventListener('DOMContentLoaded', () => {
+  const mc = document.getElementById('menuContent');
+  if (mc) mc.innerHTML = menuData.makeup;
+});
 
 function escapeHtml(text) {
   if (!text) return '';

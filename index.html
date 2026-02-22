@@ -156,7 +156,28 @@ html, body {
   min-width: 0;
 }
 @media (max-width: 600px) {
-  .menu-sidebar { display: none; }
+  .menu-sidebar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 85vw;
+    height: 100vh;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+  .menu-sidebar.mobile-open {
+    display: flex;
+  }
+  .menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.3);
+    z-index: 999;
+  }
+  .menu-overlay.active { display: block; }
+  .mobile-menu-btn { display: inline-flex !important; }
 }
 .chat-header {
   background: white;
@@ -187,7 +208,7 @@ html, body {
 .message.from-me { align-items: flex-end; }
 .message.from-them { align-items: flex-start; }
 .msg-bubble {
-  max-width: 70%;
+  max-width: 85%;
   padding: 0.8rem 1rem;
   border-radius: 12px;
   word-wrap: break-word;
@@ -354,6 +375,17 @@ html, body {
   cursor: pointer;
 }
 .logout-btn:hover { background: #F5F3EE; }
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  background: #F5F3EE;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
 .msg-link { color: inherit; text-decoration: underline; word-break: break-all; }
 .msg-link-btn {
   display: inline-block;
@@ -456,15 +488,19 @@ html, body {
   </div>
   <div class="customer-chat-area" onclick="collapseSidebar()">
     <div class="chat-header">
-      <div>
-        <h3>MALLANG Beauty</h3>
-        <p style="font-size: 0.85rem; color: #666;" id="customerSubtitle">상담원이 곧 응답합니다</p>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button class="mobile-menu-btn" onclick="event.stopPropagation(); toggleMobileMenu()">☰</button>
+        <div>
+          <h3>MALLANG Beauty</h3>
+          <p style="font-size: 0.85rem; color: #666;" id="customerSubtitle">상담원이 곧 응답합니다</p>
+        </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <div class="lang-badge" id="userLang"></div>
         <button class="logout-btn" onclick="doLogout()">로그아웃</button>
       </div>
     </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
     <div class="messages" id="customerMsg"></div>
     <div class="input-area">
       <textarea class="msg-input" id="customerInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
@@ -1152,12 +1188,24 @@ function copyBookingForm() {
   });
 }
 
-// 사이드바 확장/축소
+// 사이드바 확장/축소 (PC)
 function expandSidebar() {
   document.querySelector('.menu-sidebar').classList.add('expanded');
 }
 function collapseSidebar() {
   document.querySelector('.menu-sidebar').classList.remove('expanded');
+}
+
+// 모바일 메뉴 토글
+function toggleMobileMenu() {
+  const sidebar = document.querySelector('.menu-sidebar');
+  const overlay = document.getElementById('menuOverlay');
+  sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('active');
+}
+function closeMobileMenu() {
+  document.querySelector('.menu-sidebar').classList.remove('mobile-open');
+  document.getElementById('menuOverlay').classList.remove('active');
 }
 
 function showMenu(key) {

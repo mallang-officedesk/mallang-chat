@@ -95,12 +95,18 @@ body {
 }
 .customer-screen { flex-direction: row; }
 .menu-sidebar {
-  width: 220px;
+  width: 180px;
+  min-width: 180px;
   background: white;
   border-right: 1px solid #E5E5E5;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  transition: width 0.3s, min-width 0.3s;
+}
+.menu-sidebar.expanded {
+  width: 320px;
+  min-width: 320px;
 }
 .menu-tabs {
   display: flex;
@@ -434,7 +440,7 @@ body {
 
 <!-- 고객 채팅 -->
 <div class="screen customer-screen" id="customerScreen">
-  <div class="menu-sidebar">
+  <div class="menu-sidebar" onclick="expandSidebar()">
     <div class="menu-tabs">
       <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
       <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
@@ -444,7 +450,7 @@ body {
     </div>
     <div class="menu-content" id="menuContent"></div>
   </div>
-  <div class="customer-chat-area">
+  <div class="customer-chat-area" onclick="collapseSidebar()">
     <div class="chat-header">
       <div>
         <h3>MALLANG Beauty</h3>
@@ -1115,8 +1121,40 @@ const menuData = {
 <p><b>인원 :</b></p>
 <p><b>원하시는 서비스 :</b></p>
 <p><b>예약금 결제 방법 :</b></p>
-<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>`
+<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">📋 복사하기 (Copy)</button>`
 };
+
+function copyBookingForm() {
+  const text = `날짜 : 월 / 일 ( 요일 )
+시간 :
+이름(영문) :
+인원 :
+원하시는 서비스 :
+예약금 결제 방법 :`;
+  navigator.clipboard.writeText(text).then(() => {
+    event.target.textContent = '✅ 복사완료!';
+    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    event.target.textContent = '✅ 복사완료!';
+    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
+  });
+}
+
+// 사이드바 확장/축소
+function expandSidebar() {
+  document.querySelector('.menu-sidebar').classList.add('expanded');
+}
+function collapseSidebar() {
+  document.querySelector('.menu-sidebar').classList.remove('expanded');
+}
 
 function showMenu(key) {
   document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));

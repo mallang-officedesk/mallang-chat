@@ -1095,6 +1095,19 @@ function openChat(chatId, type, partnerUid) {
   }
   
   showScreen('chatRoomScreen');
+  
+  // 예약 양식 대기 중이면 채팅 입력창에 넣기
+  if (pendingBookingForm) {
+    setTimeout(() => {
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.value = pendingBookingForm;
+        input.focus();
+        autoResize(input);
+      }
+      pendingBookingForm = null;
+    }, 300);
+  }
 }
 
 function backToChatList() {
@@ -1632,32 +1645,60 @@ ko: {
 <div class="price-row"><span>AM 7:00 헤어</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 메이크업</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ 커트</h4>
-<div class="price-row"><span>여성 커트</span><span>₩60,000~</span></div>
-<div class="price-row"><span>남성 커트</span><span>₩50,000~</span></div>
-<h4>🎨 컬러</h4>
-<div class="price-row"><span>전체 컬러</span><span>₩120,000~</span></div>
-<div class="price-row"><span>뿌리 컬러</span><span>₩90,000~</span></div>
-<div class="price-row"><span>블리치</span><span>₩100,000~</span></div>
-<div class="price-row"><span>남성 컬러</span><span>₩120,000~</span></div>
+<div class="price-row"><span>여성</span><span>₩55,000</span></div>
+<div class="price-row"><span>여성 + 스타일링</span><span>₩85,000</span></div>
+<div class="price-row"><span>남성</span><span>₩40,000</span></div>
+<div class="price-row"><span>남성 + 스타일링</span><span>₩60,000</span></div>
 <h4>🌀 펌</h4>
-<div class="price-row"><span>세팅펌</span><span>₩140,000~</span></div>
-<div class="price-row"><span>다운펌</span><span>₩120,000~</span></div>
-<div class="price-row"><span>스트레이트</span><span>₩180,000~</span></div>
-<div class="price-row"><span>남성 펌</span><span>₩140,000~</span></div>
-<h4>💊 트리트먼트</h4>
-<div class="price-row"><span>베이직</span><span>₩50,000~</span></div>
-<div class="price-row"><span>프리미엄</span><span>₩80,000~</span></div>
-<p class="note">* 가격은 길이/모량에 따라 달라질 수 있습니다.<br>* 정확한 가격은 상담 후 안내드립니다.</p>`,
+<div class="price-row"><span>여성</span><span>₩220,000~</span></div>
+<div class="price-row"><span>남성</span><span>₩140,000~</span></div>
+<h4>🎨 컬러</h4>
+<div class="price-row"><span>여성</span><span>₩140,000~</span></div>
+<div class="price-row"><span>남성</span><span>₩120,000</span></div>
+<h4>✨ 익스텐션</h4>
+<div class="price-row"><span>일반</span><span>₩400,000~</span></div>
+<div class="price-row"><span>프리미엄</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 헤드 스파</h4>
-<div class="price-row"><span>베이직 (30분)</span><span>₩60,000</span></div>
-<div class="price-row"><span>프리미엄 (60분)</span><span>₩100,000</span></div>
-<div class="price-row"><span>두피 스케일링 + 스파</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 프로필 / 증명사진</h4>
-<div class="price-row"><span>증명사진 (ID)</span><span>₩60,000</span></div>
-<div class="price-row"><span>프로필 촬영</span><span>₩120,000</span></div>
-<div class="price-row"><span>커플 촬영</span><span>₩220,000</span></div>
+<div class="price-row"><span>30분</span><span>₩70,000</span></div>
+<div class="price-row"><span>60분</span><span>₩130,000</span></div>
+<h4>💊 헤어 트리트먼트</h4>
+<div class="price-row"><span>60분</span><span>₩140,000~</span></div>
+<h4>💆 헤드 스파 + 헤어 트리트먼트</h4>
+<div class="price-row"><span>90분</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ 프리미엄 증명사진 ] – ₩60,000 (30분)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• 신분증, 학생증, 사원증, 기념사진용<br>
+• 배경색 선택 가능<br>
+• 정면 또는 반신 측면 촬영<br>
+• 촬영 후 1장 선택 → 1:1 보정 포함<br>
+• 추가 보정: 1장당 ₩40,000<br>
+• 인화 포함:<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1매) / 5.5 × 8 cm (2매) / 3.5 × 4.5 cm (8매)
+</p>
+<div class="divider"></div>
+<h4>📸 [ 프로필 촬영 ] – ₩120,000 (60분)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• 4가지 무드 중 1가지 선택, 자유 포즈<br>
+• 반신 및 전신 촬영<br>
+• 전체 원본 이메일 전송<br>
+• 보정 1장 포함 (소요기간: 7~14일)<br>
+• 컨셉당 의상 1벌<br>
+• 추가 보정: 1장당 ₩40,000<br>
+* 의상은 본인이 준비해 주세요.
+</p>
+<div class="divider"></div>
+<h4>📸 [ 커플 프로필 촬영 ] – ₩220,000 (60분)</h4>
+<p class="note">
+• 포토그래퍼와 무드 및 포즈 상담<br>
+• 반신 및 전신 촬영<br>
+• 전체 원본 이메일 전송<br>
+• 보정 1장 포함 (소요기간: 7~14일)<br>
+• 컨셉당 의상 1벌<br>
+• 추가 보정: 1장당 ₩40,000<br>
+* 의상은 본인이 준비해 주세요.
+</p>`,
   booking: `<h4>📅 예약하기</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.<br>
@@ -1701,32 +1742,60 @@ en: {
 <div class="price-row"><span>AM 7:00 Hair</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 Make up</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ Cut</h4>
-<div class="price-row"><span>Lady cut</span><span>₩60,000~</span></div>
-<div class="price-row"><span>Man cut</span><span>₩50,000~</span></div>
-<h4>🎨 Color</h4>
-<div class="price-row"><span>All color</span><span>₩120,000~</span></div>
-<div class="price-row"><span>Root color</span><span>₩90,000~</span></div>
-<div class="price-row"><span>Bleach</span><span>₩100,000~</span></div>
-<div class="price-row"><span>Man color</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Lady</span><span>₩55,000</span></div>
+<div class="price-row"><span>Lady + styling</span><span>₩85,000</span></div>
+<div class="price-row"><span>Man</span><span>₩40,000</span></div>
+<div class="price-row"><span>Man + styling</span><span>₩60,000</span></div>
 <h4>🌀 Perm</h4>
-<div class="price-row"><span>Setting perm</span><span>₩140,000~</span></div>
-<div class="price-row"><span>Down perm</span><span>₩120,000~</span></div>
-<div class="price-row"><span>Straight</span><span>₩180,000~</span></div>
-<div class="price-row"><span>Man perm</span><span>₩140,000~</span></div>
-<h4>💊 Treatment</h4>
-<div class="price-row"><span>Basic</span><span>₩50,000~</span></div>
-<div class="price-row"><span>Premium</span><span>₩80,000~</span></div>
-<p class="note">* Prices may vary depending on hair length and volume.<br>* Exact pricing will be provided after consultation.</p>`,
+<div class="price-row"><span>Lady</span><span>₩220,000~</span></div>
+<div class="price-row"><span>Man</span><span>₩140,000~</span></div>
+<h4>🎨 Color</h4>
+<div class="price-row"><span>Lady</span><span>₩140,000~</span></div>
+<div class="price-row"><span>Man</span><span>₩120,000</span></div>
+<h4>✨ Extension</h4>
+<div class="price-row"><span>Normal</span><span>₩400,000~</span></div>
+<div class="price-row"><span>Premium</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 Head Spa</h4>
-<div class="price-row"><span>Basic (30min)</span><span>₩60,000</span></div>
-<div class="price-row"><span>Premium (60min)</span><span>₩100,000</span></div>
-<div class="price-row"><span>Scalp scaling + Spa</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 Profile / ID Photo</h4>
-<div class="price-row"><span>ID Photo</span><span>₩60,000</span></div>
-<div class="price-row"><span>Profile Photo</span><span>₩120,000</span></div>
-<div class="price-row"><span>Couple Photo</span><span>₩220,000</span></div>
+<div class="price-row"><span>30 min</span><span>₩70,000</span></div>
+<div class="price-row"><span>60 min</span><span>₩130,000</span></div>
+<h4>💊 Hair Treatment</h4>
+<div class="price-row"><span>60 min</span><span>₩140,000~</span></div>
+<h4>💆 Head Spa + Hair Treatment</h4>
+<div class="price-row"><span>90 min</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ Premium ID Photo ] – ₩60,000 (30 min)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• For ID cards, student IDs, employee badges, and commemorative photos<br>
+• Background color selectable<br>
+• Front-facing or half-body side-angle shots only<br>
+• Select 1 photo → 1:1 retouching included<br>
+• Additional retouching: ₩40,000 per photo<br>
+• Printed photos included:<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1 print) / 5.5 × 8 cm (2 prints) / 3.5 × 4.5 cm (8 prints)
+</p>
+<div class="divider"></div>
+<h4>📸 [ Profile Photoshoot ] – ₩120,000 (60 min)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• Choose 1 out of 4 moods, free posing<br>
+• Half-body and full-body shots<br>
+• All original photos sent via email<br>
+• 1 retouched photo included (turnaround: 7–14 days)<br>
+• 1 outfit per concept<br>
+• Additional retouching: ₩40,000 per photo<br>
+* Outfits must be brought by the client.
+</p>
+<div class="divider"></div>
+<h4>📸 [ Couple Profile Photoshoot ] – ₩220,000 (60 min)</h4>
+<p class="note">
+• Consultation with photographer regarding mood and poses<br>
+• Half-body and full-body shots<br>
+• All original photos sent via email<br>
+• 1 retouched photo included (turnaround: 7–14 days)<br>
+• 1 outfit per concept<br>
+• Additional retouching: ₩40,000 per photo<br>
+* Outfits must be brought by the client.
+</p>`,
   booking: `<h4>📅 Reservation</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • Cancellations and refunds are available until 6:00 PM (KST), two days before the appointment.<br>
@@ -1770,32 +1839,60 @@ zh: {
 <div class="price-row"><span>AM 7:00 发型</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 化妆</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ 剪发</h4>
-<div class="price-row"><span>女士剪发</span><span>₩60,000~</span></div>
-<div class="price-row"><span>男士剪发</span><span>₩50,000~</span></div>
-<h4>🎨 染发</h4>
-<div class="price-row"><span>全头染</span><span>₩120,000~</span></div>
-<div class="price-row"><span>补染发根</span><span>₩90,000~</span></div>
-<div class="price-row"><span>漂发</span><span>₩100,000~</span></div>
-<div class="price-row"><span>男士染发</span><span>₩120,000~</span></div>
+<div class="price-row"><span>女士</span><span>₩55,000</span></div>
+<div class="price-row"><span>女士 + 造型</span><span>₩85,000</span></div>
+<div class="price-row"><span>男士</span><span>₩40,000</span></div>
+<div class="price-row"><span>男士 + 造型</span><span>₩60,000</span></div>
 <h4>🌀 烫发</h4>
-<div class="price-row"><span>造型烫</span><span>₩140,000~</span></div>
-<div class="price-row"><span>柔顺烫</span><span>₩120,000~</span></div>
-<div class="price-row"><span>拉直</span><span>₩180,000~</span></div>
-<div class="price-row"><span>男士烫发</span><span>₩140,000~</span></div>
-<h4>💊 护理</h4>
-<div class="price-row"><span>基础护理</span><span>₩50,000~</span></div>
-<div class="price-row"><span>高级护理</span><span>₩80,000~</span></div>
-<p class="note">* 价格可能因发长/发量而有所不同。<br>* 准确价格将在咨询后告知。</p>`,
+<div class="price-row"><span>女士</span><span>₩220,000~</span></div>
+<div class="price-row"><span>男士</span><span>₩140,000~</span></div>
+<h4>🎨 染发</h4>
+<div class="price-row"><span>女士</span><span>₩140,000~</span></div>
+<div class="price-row"><span>男士</span><span>₩120,000</span></div>
+<h4>✨ 接发</h4>
+<div class="price-row"><span>普通</span><span>₩400,000~</span></div>
+<div class="price-row"><span>高级</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 头部水疗</h4>
-<div class="price-row"><span>基础 (30分钟)</span><span>₩60,000</span></div>
-<div class="price-row"><span>高级 (60分钟)</span><span>₩100,000</span></div>
-<div class="price-row"><span>头皮去角质 + 水疗</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 证件照 / 写真</h4>
-<div class="price-row"><span>证件照</span><span>₩60,000</span></div>
-<div class="price-row"><span>个人写真</span><span>₩120,000</span></div>
-<div class="price-row"><span>情侣写真</span><span>₩220,000</span></div>
+<div class="price-row"><span>30分钟</span><span>₩70,000</span></div>
+<div class="price-row"><span>60分钟</span><span>₩130,000</span></div>
+<h4>💊 头发护理</h4>
+<div class="price-row"><span>60分钟</span><span>₩140,000~</span></div>
+<h4>💆 头部水疗 + 头发护理</h4>
+<div class="price-row"><span>90分钟</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ 高级证件照 ] – ₩60,000 (30分钟)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• 适用于身份证、学生证、员工证及纪念照<br>
+• 可选择背景颜色<br>
+• 仅限正面或半身侧面拍摄<br>
+• 拍摄后选1张 → 含1:1精修<br>
+• 追加精修：每张 ₩40,000<br>
+• 含冲印照片：<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1张) / 5.5 × 8 cm (2张) / 3.5 × 4.5 cm (8张)
+</p>
+<div class="divider"></div>
+<h4>📸 [ 个人写真 ] – ₩120,000 (60分钟)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• 4种风格中选1种，自由摆拍<br>
+• 半身及全身拍摄<br>
+• 全部原片通过邮件发送<br>
+• 含1张精修（周期：7~14天）<br>
+• 每个概念1套服装<br>
+• 追加精修：每张 ₩40,000<br>
+* 服装需自备。
+</p>
+<div class="divider"></div>
+<h4>📸 [ 情侣写真 ] – ₩220,000 (60分钟)</h4>
+<p class="note">
+• 与摄影师沟通风格和姿势<br>
+• 半身及全身拍摄<br>
+• 全部原片通过邮件发送<br>
+• 含1张精修（周期：7~14天）<br>
+• 每个概念1套服装<br>
+• 追加精修：每张 ₩40,000<br>
+* 服装需自备。
+</p>`,
   booking: `<h4>📅 预约</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • 可在预约日前2天下午6点(KST)前取消并退款。<br>
@@ -1839,32 +1936,60 @@ ja: {
 <div class="price-row"><span>AM 7:00 ヘア</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 メイク</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ カット</h4>
-<div class="price-row"><span>レディースカット</span><span>₩60,000~</span></div>
-<div class="price-row"><span>メンズカット</span><span>₩50,000~</span></div>
-<h4>🎨 カラー</h4>
-<div class="price-row"><span>全体カラー</span><span>₩120,000~</span></div>
-<div class="price-row"><span>リタッチ</span><span>₩90,000~</span></div>
-<div class="price-row"><span>ブリーチ</span><span>₩100,000~</span></div>
-<div class="price-row"><span>メンズカラー</span><span>₩120,000~</span></div>
+<div class="price-row"><span>レディース</span><span>₩55,000</span></div>
+<div class="price-row"><span>レディース + スタイリング</span><span>₩85,000</span></div>
+<div class="price-row"><span>メンズ</span><span>₩40,000</span></div>
+<div class="price-row"><span>メンズ + スタイリング</span><span>₩60,000</span></div>
 <h4>🌀 パーマ</h4>
-<div class="price-row"><span>セッティングパーマ</span><span>₩140,000~</span></div>
-<div class="price-row"><span>ダウンパーマ</span><span>₩120,000~</span></div>
-<div class="price-row"><span>ストレート</span><span>₩180,000~</span></div>
-<div class="price-row"><span>メンズパーマ</span><span>₩140,000~</span></div>
-<h4>💊 トリートメント</h4>
-<div class="price-row"><span>ベーシック</span><span>₩50,000~</span></div>
-<div class="price-row"><span>プレミアム</span><span>₩80,000~</span></div>
-<p class="note">* 価格は髪の長さ・量によって異なる場合があります。<br>* 正確な価格はカウンセリング後にご案内いたします。</p>`,
+<div class="price-row"><span>レディース</span><span>₩220,000~</span></div>
+<div class="price-row"><span>メンズ</span><span>₩140,000~</span></div>
+<h4>🎨 カラー</h4>
+<div class="price-row"><span>レディース</span><span>₩140,000~</span></div>
+<div class="price-row"><span>メンズ</span><span>₩120,000</span></div>
+<h4>✨ エクステンション</h4>
+<div class="price-row"><span>ノーマル</span><span>₩400,000~</span></div>
+<div class="price-row"><span>プレミアム</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 ヘッドスパ</h4>
-<div class="price-row"><span>ベーシック (30分)</span><span>₩60,000</span></div>
-<div class="price-row"><span>プレミアム (60分)</span><span>₩100,000</span></div>
-<div class="price-row"><span>頭皮スケーリング + スパ</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 プロフィール / 証明写真</h4>
-<div class="price-row"><span>証明写真</span><span>₩60,000</span></div>
-<div class="price-row"><span>プロフィール撮影</span><span>₩120,000</span></div>
-<div class="price-row"><span>カップル撮影</span><span>₩220,000</span></div>
+<div class="price-row"><span>30分</span><span>₩70,000</span></div>
+<div class="price-row"><span>60分</span><span>₩130,000</span></div>
+<h4>💊 ヘアトリートメント</h4>
+<div class="price-row"><span>60分</span><span>₩140,000~</span></div>
+<h4>💆 ヘッドスパ + ヘアトリートメント</h4>
+<div class="price-row"><span>90分</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ プレミアム証明写真 ] – ₩60,000 (30分)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• 身分証、学生証、社員証、記念写真用<br>
+• 背景色選択可能<br>
+• 正面または半身サイドアングルのみ<br>
+• 撮影後1枚選択 → 1:1レタッチ込み<br>
+• 追加レタッチ：1枚 ₩40,000<br>
+• プリント込み：<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1枚) / 5.5 × 8 cm (2枚) / 3.5 × 4.5 cm (8枚)
+</p>
+<div class="divider"></div>
+<h4>📸 [ プロフィール撮影 ] – ₩120,000 (60分)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• 4つのムードから1つ選択、自由ポーズ<br>
+• 半身・全身撮影<br>
+• 全原本メール送信<br>
+• レタッチ1枚込み（納期：7～14日）<br>
+• コンセプトごとに衣装1着<br>
+• 追加レタッチ：1枚 ₩40,000<br>
+* 衣装はご持参ください。
+</p>
+<div class="divider"></div>
+<h4>📸 [ カップル撮影 ] – ₩220,000 (60分)</h4>
+<p class="note">
+• フォトグラファーとムード・ポーズ相談<br>
+• 半身・全身撮影<br>
+• 全原本メール送信<br>
+• レタッチ1枚込み（納期：7～14日）<br>
+• コンセプトごとに衣装1着<br>
+• 追加レタッチ：1枚 ₩40,000<br>
+* 衣装はご持参ください。
+</p>`,
   booking: `<h4>📅 ご予約</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • ご予約日の2日前18:00(KST)までキャンセル・返金が可能です。<br>
@@ -1908,32 +2033,60 @@ th: {
 <div class="price-row"><span>AM 7:00 ผม</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 แต่งหน้า</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ ตัดผม</h4>
-<div class="price-row"><span>ตัดผมผู้หญิง</span><span>₩60,000~</span></div>
-<div class="price-row"><span>ตัดผมผู้ชาย</span><span>₩50,000~</span></div>
-<h4>🎨 ทำสีผม</h4>
-<div class="price-row"><span>ทำสีทั้งหัว</span><span>₩120,000~</span></div>
-<div class="price-row"><span>เติมโคน</span><span>₩90,000~</span></div>
-<div class="price-row"><span>ฟอกสี</span><span>₩100,000~</span></div>
-<div class="price-row"><span>ทำสีผู้ชาย</span><span>₩120,000~</span></div>
+<div class="price-row"><span>ผู้หญิง</span><span>₩55,000</span></div>
+<div class="price-row"><span>ผู้หญิง + จัดแต่ง</span><span>₩85,000</span></div>
+<div class="price-row"><span>ผู้ชาย</span><span>₩40,000</span></div>
+<div class="price-row"><span>ผู้ชาย + จัดแต่ง</span><span>₩60,000</span></div>
 <h4>🌀 ดัดผม</h4>
-<div class="price-row"><span>ดัดเซ็ตติ้ง</span><span>₩140,000~</span></div>
-<div class="price-row"><span>ดัดดาวน์</span><span>₩120,000~</span></div>
-<div class="price-row"><span>ยืดผม</span><span>₩180,000~</span></div>
-<div class="price-row"><span>ดัดผมผู้ชาย</span><span>₩140,000~</span></div>
-<h4>💊 ทรีตเมนต์</h4>
-<div class="price-row"><span>พื้นฐาน</span><span>₩50,000~</span></div>
-<div class="price-row"><span>พรีเมียม</span><span>₩80,000~</span></div>
-<p class="note">* ราคาอาจแตกต่างตามความยาวและปริมาณเส้นผม<br>* ราคาที่แน่นอนจะแจ้งหลังจากปรึกษา</p>`,
+<div class="price-row"><span>ผู้หญิง</span><span>₩220,000~</span></div>
+<div class="price-row"><span>ผู้ชาย</span><span>₩140,000~</span></div>
+<h4>🎨 ทำสีผม</h4>
+<div class="price-row"><span>ผู้หญิง</span><span>₩140,000~</span></div>
+<div class="price-row"><span>ผู้ชาย</span><span>₩120,000</span></div>
+<h4>✨ ต่อผม</h4>
+<div class="price-row"><span>ปกติ</span><span>₩400,000~</span></div>
+<div class="price-row"><span>พรีเมียม</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 เฮดสปา</h4>
-<div class="price-row"><span>พื้นฐาน (30 นาที)</span><span>₩60,000</span></div>
-<div class="price-row"><span>พรีเมียม (60 นาที)</span><span>₩100,000</span></div>
-<div class="price-row"><span>สครับหนังศีรษะ + สปา</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 โปรไฟล์ / รูปถ่ายบัตร</h4>
-<div class="price-row"><span>รูปถ่ายบัตร (ID)</span><span>₩60,000</span></div>
-<div class="price-row"><span>ถ่ายโปรไฟล์</span><span>₩120,000</span></div>
-<div class="price-row"><span>ถ่ายคู่รัก</span><span>₩220,000</span></div>
+<div class="price-row"><span>30 นาที</span><span>₩70,000</span></div>
+<div class="price-row"><span>60 นาที</span><span>₩130,000</span></div>
+<h4>💊 ทรีตเมนต์ผม</h4>
+<div class="price-row"><span>60 นาที</span><span>₩140,000~</span></div>
+<h4>💆 เฮดสปา + ทรีตเมนต์ผม</h4>
+<div class="price-row"><span>90 นาที</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ รูปบัตรพรีเมียม ] – ₩60,000 (30 นาที)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• สำหรับบัตรประชาชน บัตรนักศึกษา บัตรพนักงาน และรูปที่ระลึก<br>
+• เลือกสีพื้นหลังได้<br>
+• ถ่ายด้านหน้าหรือครึ่งตัวด้านข้างเท่านั้น<br>
+• เลือก 1 รูปจากการถ่าย → รวมรีทัช 1:1<br>
+• รีทัชเพิ่ม: ₩40,000 ต่อรูป<br>
+• รวมภาพพิมพ์:<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1 ใบ) / 5.5 × 8 cm (2 ใบ) / 3.5 × 4.5 cm (8 ใบ)
+</p>
+<div class="divider"></div>
+<h4>📸 [ ถ่ายโปรไฟล์ ] – ₩120,000 (60 นาที)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• เลือก 1 จาก 4 มู้ด โพสท่าอิสระ<br>
+• ถ่ายครึ่งตัวและเต็มตัว<br>
+• ส่งรูปต้นฉบับทั้งหมดทางอีเมล<br>
+• รวมรีทัช 1 รูป (ระยะเวลา: 7-14 วัน)<br>
+• ชุดละ 1 คอนเซ็ปต์<br>
+• รีทัชเพิ่ม: ₩40,000 ต่อรูป<br>
+* ต้องเตรียมชุดมาเอง
+</p>
+<div class="divider"></div>
+<h4>📸 [ ถ่ายคู่รัก ] – ₩220,000 (60 นาที)</h4>
+<p class="note">
+• ปรึกษาช่างภาพเรื่องมู้ดและท่าโพส<br>
+• ถ่ายครึ่งตัวและเต็มตัว<br>
+• ส่งรูปต้นฉบับทั้งหมดทางอีเมล<br>
+• รวมรีทัช 1 รูป (ระยะเวลา: 7-14 วัน)<br>
+• ชุดละ 1 คอนเซ็ปต์<br>
+• รีทัชเพิ่ม: ₩40,000 ต่อรูป<br>
+* ต้องเตรียมชุดมาเอง
+</p>`,
   booking: `<h4>📅 จองคิว</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • สามารถยกเลิกและขอคืนเงินได้ก่อน 18:00 น. (KST) 2 วันก่อนวันนัดหมาย<br>
@@ -1977,32 +2130,60 @@ vi: {
 <div class="price-row"><span>AM 7:00 Tóc</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 Trang điểm</span><span>+₩30,000</span></div>`,
   hair: `<h4>✂️ Cắt tóc</h4>
-<div class="price-row"><span>Cắt tóc nữ</span><span>₩60,000~</span></div>
-<div class="price-row"><span>Cắt tóc nam</span><span>₩50,000~</span></div>
-<h4>🎨 Nhuộm tóc</h4>
-<div class="price-row"><span>Nhuộm toàn bộ</span><span>₩120,000~</span></div>
-<div class="price-row"><span>Nhuộm chân tóc</span><span>₩90,000~</span></div>
-<div class="price-row"><span>Tẩy tóc</span><span>₩100,000~</span></div>
-<div class="price-row"><span>Nhuộm nam</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Nữ</span><span>₩55,000</span></div>
+<div class="price-row"><span>Nữ + tạo kiểu</span><span>₩85,000</span></div>
+<div class="price-row"><span>Nam</span><span>₩40,000</span></div>
+<div class="price-row"><span>Nam + tạo kiểu</span><span>₩60,000</span></div>
 <h4>🌀 Uốn tóc</h4>
-<div class="price-row"><span>Uốn setting</span><span>₩140,000~</span></div>
-<div class="price-row"><span>Uốn down</span><span>₩120,000~</span></div>
-<div class="price-row"><span>Duỗi tóc</span><span>₩180,000~</span></div>
-<div class="price-row"><span>Uốn nam</span><span>₩140,000~</span></div>
-<h4>💊 Phục hồi tóc</h4>
-<div class="price-row"><span>Cơ bản</span><span>₩50,000~</span></div>
-<div class="price-row"><span>Cao cấp</span><span>₩80,000~</span></div>
-<p class="note">* Giá có thể thay đổi tùy theo độ dài và lượng tóc.<br>* Giá chính xác sẽ được thông báo sau khi tư vấn.</p>`,
+<div class="price-row"><span>Nữ</span><span>₩220,000~</span></div>
+<div class="price-row"><span>Nam</span><span>₩140,000~</span></div>
+<h4>🎨 Nhuộm tóc</h4>
+<div class="price-row"><span>Nữ</span><span>₩140,000~</span></div>
+<div class="price-row"><span>Nam</span><span>₩120,000</span></div>
+<h4>✨ Nối tóc</h4>
+<div class="price-row"><span>Thường</span><span>₩400,000~</span></div>
+<div class="price-row"><span>Cao cấp</span><span>₩600,000~</span></div>`,
   spa: `<h4>💆 Head Spa</h4>
-<div class="price-row"><span>Cơ bản (30 phút)</span><span>₩60,000</span></div>
-<div class="price-row"><span>Cao cấp (60 phút)</span><span>₩100,000</span></div>
-<div class="price-row"><span>Tẩy tế bào da đầu + Spa</span><span>₩120,000</span></div>`,
-  photo: `<h4>📸 Ảnh profile / Ảnh thẻ</h4>
-<div class="price-row"><span>Ảnh thẻ (ID)</span><span>₩60,000</span></div>
-<div class="price-row"><span>Chụp ảnh profile</span><span>₩120,000</span></div>
-<div class="price-row"><span>Chụp ảnh cặp đôi</span><span>₩220,000</span></div>
+<div class="price-row"><span>30 phút</span><span>₩70,000</span></div>
+<div class="price-row"><span>60 phút</span><span>₩130,000</span></div>
+<h4>💊 Phục hồi tóc</h4>
+<div class="price-row"><span>60 phút</span><span>₩140,000~</span></div>
+<h4>💆 Head Spa + Phục hồi tóc</h4>
+<div class="price-row"><span>90 phút</span><span>₩230,000</span></div>`,
+  photo: `<h4>📸 [ Ảnh thẻ cao cấp ] – ₩60,000 (30 phút)</h4>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
-<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+<p class="note">
+• Dùng cho CMND, thẻ sinh viên, thẻ nhân viên và ảnh kỷ niệm<br>
+• Có thể chọn màu nền<br>
+• Chỉ chụp chính diện hoặc nửa người nghiêng<br>
+• Chọn 1 ảnh → bao gồm chỉnh sửa 1:1<br>
+• Chỉnh sửa thêm: ₩40,000/ảnh<br>
+• Bao gồm ảnh in:<br>
+&nbsp;&nbsp;5.5 × 7.5 cm (1 tấm) / 5.5 × 8 cm (2 tấm) / 3.5 × 4.5 cm (8 tấm)
+</p>
+<div class="divider"></div>
+<h4>📸 [ Chụp ảnh profile ] – ₩120,000 (60 phút)</h4>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>
+<p class="note">
+• Chọn 1 trong 4 phong cách, tự do tạo dáng<br>
+• Chụp nửa người và toàn thân<br>
+• Gửi toàn bộ ảnh gốc qua email<br>
+• Bao gồm chỉnh sửa 1 ảnh (thời gian: 7-14 ngày)<br>
+• 1 bộ trang phục/concept<br>
+• Chỉnh sửa thêm: ₩40,000/ảnh<br>
+* Trang phục tự chuẩn bị.
+</p>
+<div class="divider"></div>
+<h4>📸 [ Chụp ảnh cặp đôi ] – ₩220,000 (60 phút)</h4>
+<p class="note">
+• Tư vấn với nhiếp ảnh gia về phong cách và tạo dáng<br>
+• Chụp nửa người và toàn thân<br>
+• Gửi toàn bộ ảnh gốc qua email<br>
+• Bao gồm chỉnh sửa 1 ảnh (thời gian: 7-14 ngày)<br>
+• 1 bộ trang phục/concept<br>
+• Chỉnh sửa thêm: ₩40,000/ảnh<br>
+* Trang phục tự chuẩn bị.
+</p>`,
   booking: `<h4>📅 Đặt lịch</h4>
 <p class="note" style="margin-bottom:0.8rem;">
 • Có thể hủy và hoàn tiền trước 18:00 (KST), 2 ngày trước ngày hẹn.<br>
@@ -2082,15 +2263,27 @@ function fillBookingForm() {
     vi: `Ngày : Tháng / Ngày ( Thứ )\nGiờ :\nTên (tiếng Anh) :\nSố người :\nDịch vụ mong muốn :\nPhương thức thanh toán :`
   };
   const form = forms[currentLang] || forms['en'];
+  
+  // 사이드바 닫기
+  closeMobileMenu();
+  
+  // 채팅방 안에 있으면 바로 입력
   const input = document.getElementById('chatInput');
-  if (input) {
+  if (input && document.getElementById('chatRoomScreen').classList.contains('active')) {
     input.value = form;
     input.focus();
     autoResize(input);
-    // 사이드바 닫기
-    closeMobileMenu();
+    return;
+  }
+  
+  // 채팅방 밖이면 관리자 채팅방으로 이동 후 입력
+  if (currentUserData && currentUserData.adminRoomId) {
+    pendingBookingForm = form;
+    openChat(currentUserData.adminRoomId, 'admin');
   }
 }
+
+let pendingBookingForm = null;
 
 function copyBookingForm() {
   fillBookingForm();

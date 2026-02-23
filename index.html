@@ -440,7 +440,7 @@ body {
   <div class="chatlist-header">
     <h2 id="chatListTitle">채팅</h2>
     <div class="chatlist-header-btns">
-      <button onclick="showPriceMenu()" id="priceMenuBtn" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;border-radius:20px;">💰 Price</button>
+      <button onclick="showPriceMenu()" id="priceMenuBtn" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;border-radius:20px;">Price</button>
       <button onclick="showFriendModal()">+ 친구추가</button>
       <button onclick="doLogout()" style="font-size:0.8rem;">로그아웃</button>
     </div>
@@ -474,7 +474,7 @@ body {
       <h3 id="roomPartnerName">-</h3>
       <p id="roomPartnerInfo"></p>
     </div>
-    <button class="mobile-menu-btn" id="roomPriceBtn" onclick="toggleMobileMenu()" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;">💰 Price</button>
+    <button class="mobile-menu-btn" id="roomPriceBtn" onclick="toggleMobileMenu()" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;">Price</button>
     <div class="lang-badge" id="roomPartnerLang"></div>
   </div>
   <div class="messages" id="chatMessages"></div>
@@ -860,14 +860,21 @@ async function initAdminRoom() {
   
   const snap = await db.ref('rooms/' + roomId).once('value');
   if (!snap.exists()) {
+    const welcomeMsg = '안녕하세요 뷰티샵 [ 말랑 ] 입니다\n\n상단의 Price 버튼을 누르면 가격과 예약양식이 나옵니다\n가격 확인 후 예약 양식을 입력해 주세요';
     await db.ref('rooms/' + roomId).set({
       userName: currentUser.displayName || 'Guest',
       userEmail: currentUser.email || '',
       userLang: currentLang,
       userId: uid,
-      lastMessage: '',
+      lastMessage: welcomeMsg,
       lastMessageTime: Date.now(),
       unreadCount: 0
+    });
+    // 웰컴 메시지 전송
+    await db.ref('rooms/' + roomId + '/messages').push({
+      text: welcomeMsg,
+      isStaff: true,
+      timestamp: Date.now()
     });
   }
   

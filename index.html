@@ -450,6 +450,10 @@ body {
       <button onclick="doLogout()" style="font-size:0.8rem;">로그아웃</button>
     </div>
   </div>
+  <div id="myCodeBar" style="display:none;background:#F9F5ED;padding:0.5rem 1.2rem;border-bottom:1px solid #E5E5E5;font-size:0.85rem;text-align:center;">
+    내 코드: <b id="myCodeDisplay" style="font-size:1.1rem;letter-spacing:0.15em;color:#C9A063;"></b>
+    <span style="color:#999;font-size:0.75rem;margin-left:0.5rem;">(디자이너에게 알려주세요)</span>
+  </div>
   <div class="chatlist-items" id="chatListItems">
     <div class="no-chats">채팅이 없습니다</div>
   </div>
@@ -461,7 +465,7 @@ body {
     <button class="modal-close" onclick="closeFriendModal()">×</button>
     <h3>🔍 친구 추가 / Add Friend</h3>
     <p style="font-size:0.85rem; color:#888; margin-bottom:1rem; text-align:center;" id="friendSearchHint">디자이너 ID를 입력하세요</p>
-    <input type="text" id="friendSearchInput" placeholder="ID 입력 (예: Jina)" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
+    <input type="text" id="friendSearchInput" placeholder="ID 입력 (예: Jina)">
     <button class="gold-btn" onclick="searchFriend()">검색 / Search</button>
     <div class="modal-result" id="friendResult"></div>
   </div>
@@ -567,6 +571,7 @@ let selectedRoomId = null; // staff panel
 let isSending = false;
 let pendingImage = null; // 업로드할 이미지 파일
 let signupRole = 'customer';
+let isSigningUp = false; // 회원가입 진행중 플래그
 
 // ========================================
 // 번역 텍스트
@@ -615,12 +620,16 @@ function showScreen(id) {
 // ========================================
 function setRole(role) {
   signupRole = role;
-  document.querySelectorAll('#roleToggle button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('#roleToggle button').forEach(b => {
+    b.classList.remove('active');
+    if ((role === 'customer' && b.textContent.includes('고객')) || (role === 'designer' && b.textContent.includes('디자이너'))) {
+      b.classList.add('active');
+    }
+  });
   const df = document.getElementById('designerFields');
   if (role === 'designer') {
     df.classList.add('show');
-    document.getElementById('friendSearchHint').textContent = '고객 ID를 입력하세요';
+    document.getElementById('friendSearchHint').textContent = '고객 코드를 입력하세요';
   } else {
     df.classList.remove('show');
     document.getElementById('friendSearchHint').textContent = '디자이너 ID를 입력하세요';
@@ -632,8 +641,13 @@ function setRole(role) {
 // ========================================
 function selectLang(lang) {
   currentLang = lang;
-  if (currentUser) {
-    initAdminRoom();
+  if (currentUser && currentUserData) {
+    // 이미 로그인된 상태
+    if (currentUserData.role !== 'designer') {
+      initAdminRoom();
+    }
+    loadChatList();
+    showScreen('chatListScreen');
   } else {
     showScreen('loginScreen');
   }
@@ -649,6 +663,7 @@ auth.onAuthStateChanged(async (user) => {
     goStaff();
     return;
   }
+  if (isSigningUp) return; // 회원가입 중에는 무시
   if (user) {
     currentUser = user;
     const snap = await db.ref('users/' + user.uid).once('value');
@@ -668,9 +683,13 @@ auth.onAuthStateChanged(async (user) => {
       loadChatList();
       showScreen('chatListScreen');
       
-      // 고객이면 Price 버튼 표시
+      // 고객이면 Price 버튼 + 코드 표시
       if (currentUserData.role !== 'designer') {
         document.getElementById('priceMenuBtn').style.display = 'inline-block';
+        if (currentUserData.friendCode) {
+          document.getElementById('myCodeBar').style.display = 'block';
+          document.getElementById('myCodeDisplay').textContent = currentUserData.friendCode;
+        }
       }
     } else {
       showScreen('langScreen');
@@ -681,6 +700,28 @@ auth.onAuthStateChanged(async (user) => {
     showScreen('langScreen');
   }
 });
+
+// ========================================
+// 고객 코드 생성 (영문+숫자 4자리)
+// ========================================
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 혼동 방지: 0/O, 1/I 제외
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+async function getUniqueCode() {
+  let code, exists = true;
+  while (exists) {
+    code = generateCode();
+    const snap = await db.ref('customerCodes/' + code).once('value');
+    exists = snap.exists();
+  }
+  return code;
+}
 
 // ========================================
 // 회원가입
@@ -717,6 +758,7 @@ async function doSignup() {
   }
   
   try {
+    isSigningUp = true;
     const cred = await auth.createUserWithEmailAndPassword(email, pw);
     await cred.user.updateProfile({ displayName: name });
     
@@ -733,19 +775,37 @@ async function doSignup() {
       // 프로필 ID 인덱스 저장
       await db.ref('profileIds/' + profileId.toLowerCase()).set(cred.user.uid);
     } else {
-      // 고객은 이름을 profileId로 사용 (uid 앞 6자리)
-      userData.profileId = cred.user.uid.substring(0, 8);
+      // 고객: 고유 4자리 코드 생성
+      const code = await getUniqueCode();
+      userData.friendCode = code;
+      await db.ref('customerCodes/' + code).set(cred.user.uid);
     }
     
     await db.ref('users/' + cred.user.uid).set(userData);
     
+    // 수동으로 상태 설정 후 화면 이동
+    currentUser = cred.user;
+    currentUserData = userData;
+    
     // 고객이면 관리자 채팅방 생성
     if (signupRole !== 'designer') {
-      currentUserData = userData;
       await initAdminRoom();
     }
     
+    isSigningUp = false;
+    loadChatList();
+    showScreen('chatListScreen');
+    
+    if (signupRole !== 'designer') {
+      document.getElementById('priceMenuBtn').style.display = 'inline-block';
+      if (userData.friendCode) {
+        document.getElementById('myCodeBar').style.display = 'block';
+        document.getElementById('myCodeDisplay').textContent = userData.friendCode;
+      }
+    }
+    
   } catch (error) {
+    isSigningUp = false;
     errEl.textContent = getAuthErrorMsg(error.code);
     errEl.style.display = 'block';
   }
@@ -1134,13 +1194,15 @@ function showFriendModal() {
   document.getElementById('friendResult').className = 'modal-result';
   document.getElementById('friendResult').innerHTML = '';
   
-  // 힌트 텍스트 업데이트
+  const input = document.getElementById('friendSearchInput');
   if (currentUserData?.role === 'designer') {
-    document.getElementById('friendSearchHint').textContent = '고객 이메일을 입력하세요';
-    document.getElementById('friendSearchInput').placeholder = 'email@example.com';
+    document.getElementById('friendSearchHint').textContent = '고객 코드를 입력하세요';
+    input.placeholder = '코드 입력 (예: A7K2)';
+    input.oninput = function() { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); };
   } else {
     document.getElementById('friendSearchHint').textContent = '디자이너 ID를 입력하세요';
-    document.getElementById('friendSearchInput').placeholder = 'ID 입력 (예: Jina)';
+    input.placeholder = 'ID 입력 (예: Jina)';
+    input.oninput = function() { this.value = this.value.replace(/[^a-zA-Z0-9_]/g, ''); };
   }
 }
 
@@ -1158,17 +1220,15 @@ async function searchFriend() {
   let foundUser = null;
   
   if (currentUserData?.role === 'designer') {
-    // 디자이너는 고객 이메일로 검색
-    const snap = await db.ref('users').orderByChild('email').equalTo(query).once('value');
-    const users = snap.val();
-    if (users) {
-      const entries = Object.entries(users);
-      for (const [uid, user] of entries) {
-        if (user.role !== 'designer') {
-          foundUid = uid;
-          foundUser = user;
-          break;
-        }
+    // 디자이너는 고객 코드로 검색
+    const codeQuery = query.toUpperCase();
+    const uidSnap = await db.ref('customerCodes/' + codeQuery).once('value');
+    if (uidSnap.exists()) {
+      foundUid = uidSnap.val();
+      const userSnap = await db.ref('users/' + foundUid).once('value');
+      foundUser = userSnap.val();
+      if (foundUser && foundUser.role === 'designer') {
+        foundUser = null; // 고객만
       }
     }
   } else {
@@ -1197,7 +1257,7 @@ async function searchFriend() {
         </div>
         <div style="flex:1;">
           <div style="font-weight:600;">${escapeHtml(foundUser.name)}</div>
-          <div style="font-size:0.8rem;color:#888;">${foundUser.role === 'designer' ? '✂️ Designer' : '👤 Customer'} ${foundUser.profileId ? '· ' + foundUser.profileId : ''}</div>
+          <div style="font-size:0.8rem;color:#888;">${foundUser.role === 'designer' ? '✂️ Designer · ' + (foundUser.profileId || '') : '👤 Customer' + (foundUser.friendCode ? ' · ' + foundUser.friendCode : '')}</div>
         </div>
         ${alreadyFriend ? 
           '<span style="color:#888;font-size:0.85rem;">이미 친구</span>' : 
@@ -1486,8 +1546,12 @@ const menuData = {
 };
 
 function showMenu(tab) {
-  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.menu-tab').forEach(t => {
+    t.classList.remove('active');
+    if (t.textContent.includes(tab === 'makeup' ? '메이크업' : tab === 'hair' ? '헤어' : tab === 'spa' ? '스파' : tab === 'photo' ? '포토' : '예약')) {
+      t.classList.add('active');
+    }
+  });
   document.getElementById('menuContent').innerHTML = menuData[tab] || '';
 }
 
@@ -1513,9 +1577,10 @@ function copyBookingForm() {
 인원 :
 원하시는 서비스 :
 결제 방법 :`;
+  const btn = document.querySelector('[onclick="copyBookingForm()"]');
   navigator.clipboard.writeText(text).then(() => {
-    event.target.textContent = '✅ 복사완료!';
-    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
+    btn.textContent = '✅ 복사완료!';
+    setTimeout(() => { btn.textContent = '📋 복사하기 (Copy)'; }, 2000);
   });
 }
 

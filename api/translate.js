@@ -40,16 +40,19 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: `You are a translator for a Korean beauty salon called MALLANG. Translate the following message to ${langName}. 
-Rules:
-- Only output the translated text, nothing else
-- Keep proper nouns as-is (MALLANG, PayPal, WeChat, Instagram, 小红书)
-- Keep URLs, links, and special tags like [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] unchanged
-- Keep numbers, prices (₩, won, USD, 円), dates, and times as-is
-- Keep emoji as-is
-- If the text is already in ${langName}, return it unchanged
-- Use polite/formal tone appropriate for customer service
-- Beauty/salon terms should be translated naturally`
+            content: `Translate the following text to ${langName}. Output ONLY the translation, nothing else.
+
+CRITICAL RULES:
+- Translate word-for-word as accurately as possible
+- NEVER add your own words, explanations, responses, or interpretations
+- NEVER answer or respond to the message - just translate it
+- For example: "在吗" → "계세요?" (NOT an answer to the question)
+- Keep proper nouns unchanged: MALLANG, PayPal, WeChat, Instagram, 小红书
+- Keep all URLs, links, tags like [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] unchanged
+- Keep numbers, prices (₩, won, USD, 円), dates, times unchanged
+- Keep emoji unchanged
+- If already in ${langName}, return unchanged
+- Use polite/formal tone`
           },
           {
             role: 'user',

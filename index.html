@@ -251,16 +251,18 @@ body {
 
 /* === 메뉴 사이드바 === */
 .menu-sidebar {
-  width: 180px;
-  min-width: 180px;
+  display: none;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 280px;
   background: white;
   border-right: 1px solid #E5E5E5;
-  display: flex;
   flex-direction: column;
   overflow-y: auto;
-  transition: width 0.3s, min-width 0.3s;
+  z-index: 1000;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.15);
 }
-.menu-sidebar.expanded { width: 320px; min-width: 320px; }
+.menu-sidebar.mobile-open { display: flex; }
 .menu-tabs { display: flex; flex-direction: column; }
 .menu-tab {
   padding: 1rem 1.2rem;
@@ -335,25 +337,18 @@ body {
 .upload-progress.active { display: block; }
 
 /* === 모바일 === */
-.mobile-menu-btn { display: none !important; padding: 0.3rem 0.7rem; border: 1px solid #DDD; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; align-items: center; gap: 0.3rem; }
+/* === 모바일 === */
+.mobile-menu-btn { padding: 0.3rem 0.7rem; border: 1px solid #DDD; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; }
 
 @media (max-width: 600px) {
-  .mobile-menu-btn { display: inline-flex !important; }
   .input-area { padding-bottom: 2.5rem; }
   .staff-screen { grid-template-columns: 1fr; }
   .customer-list { display: none; }
   .menu-sidebar {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
     width: 85vw;
-    height: 100%;
     height: 100dvh;
-    z-index: 1000;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
     padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
-  .menu-sidebar.mobile-open { display: flex; }
   .menu-overlay { height: 100dvh; }
 }
 @media (max-width: 768px) {

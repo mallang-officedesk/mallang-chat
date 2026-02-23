@@ -890,6 +890,7 @@ async function initAdminRoom() {
       userLang: currentLang,
       userId: uid,
       lastMessage: welcomeKo,
+      lastMessageTranslated: welcomeTranslated,
       lastMessageTime: Date.now(),
       unreadCount: 0
     });
@@ -934,7 +935,7 @@ function loadChatList() {
           name: 'MALLANG',
           avatar: 'M',
           avatarClass: 'admin',
-          preview: adminRoom.lastMessage || '새로운 대화',
+          preview: adminRoom.lastMessageTranslated || adminRoom.lastMessage || '새로운 대화',
           time: adminRoom.lastMessageTime || 0,
           unread: 0
         });
@@ -1170,6 +1171,7 @@ async function sendChatMsg() {
       });
       await db.ref('rooms/' + currentChatId).update({
         lastMessage: imageUrl ? '📷 사진' : text,
+        lastMessageTranslated: imageUrl ? '📷 사진' : translated,
         lastMessageTime: Date.now(),
         unreadCount: firebase.database.ServerValue.increment(1)
       });
@@ -1476,7 +1478,7 @@ async function sendStaffMsg() {
       text: text, translated: translated, isStaff: true, timestamp: Date.now()
     });
     await db.ref('rooms/' + selectedRoomId).update({
-      lastMessage: text, lastMessageTime: Date.now()
+      lastMessage: text, lastMessageTranslated: translated, lastMessageTime: Date.now()
     });
   } catch (error) { alert('전송 실패: ' + error.message); }
   finally { isSending = false; }
@@ -1531,7 +1533,77 @@ function searchCustomers() {
 // ========================================
 // 메뉴/가격표 사이드바
 // ========================================
-const menuData = {
+const menuDataByLang = {
+ko: {
+  makeup: `<h4>💄 [ Lady - Make up ]</h4>
+<div class="price-row"><span>A (데일리)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (아이돌, 화보)</span><span>₩110,000</span></div>
+<h4>🤵 [ Man - Make up ]</h4>
+<div class="price-row"><span>A (데일리)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (아이돌, 화보)</span><span>₩90,000</span></div>
+<h4>📚 [ 메이크업 레슨 ]</h4>
+<div class="price-row"><span>90분</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ 헤어 세팅</h4>
+<p class="note">(+ 샴푸 +₩20,000)</p>
+<div class="price-row"><span>[ Lady ] A (데일리)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (반묶음)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (올림머리)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ Man ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ 조기 추가요금 (오전 10시 이전)</h4>
+<div class="price-row"><span>AM 9:00 헤어</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 메이크업</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 헤어</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 메이크업</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 헤어</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 메이크업</span><span>+₩30,000</span></div>`,
+  hair: `<h4>✂️ 커트</h4>
+<div class="price-row"><span>여성 커트</span><span>₩60,000~</span></div>
+<div class="price-row"><span>남성 커트</span><span>₩50,000~</span></div>
+<h4>🎨 컬러</h4>
+<div class="price-row"><span>전체 컬러</span><span>₩120,000~</span></div>
+<div class="price-row"><span>뿌리 컬러</span><span>₩90,000~</span></div>
+<div class="price-row"><span>블리치</span><span>₩100,000~</span></div>
+<div class="price-row"><span>남성 컬러</span><span>₩120,000~</span></div>
+<h4>🌀 펌</h4>
+<div class="price-row"><span>세팅펌</span><span>₩140,000~</span></div>
+<div class="price-row"><span>다운펌</span><span>₩120,000~</span></div>
+<div class="price-row"><span>스트레이트</span><span>₩180,000~</span></div>
+<div class="price-row"><span>남성 펌</span><span>₩140,000~</span></div>
+<h4>💊 트리트먼트</h4>
+<div class="price-row"><span>베이직</span><span>₩50,000~</span></div>
+<div class="price-row"><span>프리미엄</span><span>₩80,000~</span></div>
+<p class="note">* 가격은 길이/모량에 따라 달라질 수 있습니다.<br>* 정확한 가격은 상담 후 안내드립니다.</p>`,
+  spa: `<h4>💆 헤드 스파</h4>
+<div class="price-row"><span>베이직 (30분)</span><span>₩60,000</span></div>
+<div class="price-row"><span>프리미엄 (60분)</span><span>₩100,000</span></div>
+<div class="price-row"><span>두피 스케일링 + 스파</span><span>₩120,000</span></div>`,
+  photo: `<h4>📸 프로필 / 증명사진</h4>
+<div class="price-row"><span>증명사진 (ID)</span><span>₩60,000</span></div>
+<div class="price-row"><span>프로필 촬영</span><span>₩120,000</span></div>
+<div class="price-row"><span>커플 촬영</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+  booking: `<h4>📅 예약하기</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.<br>
+• 1시간 이내에 예약금 결제가 가능하시면 아래 내용을 작성해 주세요.<br>
+• 총금액에서 예약금을 제외한 나머지 금액을 현장에서 결제합니다.<br>
+• 예약금 결제 후 스크린샷을 꼭 이곳에 남겨주세요. 그렇지 못할 경우 예약이 확정되지 않습니다.
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>날짜 :</b> 월 / 일 ( 요일 )</p>
+<p><b>시간 :</b></p>
+<p><b>이름(영문) :</b></p>
+<p><b>인원 :</b></p>
+<p><b>원하시는 서비스 :</b></p>
+<p><b>결제 방법 :</b></p>
+<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ 채팅에 입력하기</button>`
+},
+
+en: {
   makeup: `<h4>💄 [ Lady - Make up ]</h4>
 <div class="price-row"><span>A (daily)</span><span>₩100,000</span></div>
 <div class="price-row"><span>B (idol, photo shoot)</span><span>₩110,000</span></div>
@@ -1555,7 +1627,6 @@ const menuData = {
 <div class="price-row"><span>AM 8:00 Make up</span><span>+₩20,000</span></div>
 <div class="price-row"><span>AM 7:00 Hair</span><span>+₩30,000</span></div>
 <div class="price-row"><span>AM 7:00 Make up</span><span>+₩30,000</span></div>`,
-
   hair: `<h4>✂️ Cut</h4>
 <div class="price-row"><span>Lady cut</span><span>₩60,000~</span></div>
 <div class="price-row"><span>Man cut</span><span>₩50,000~</span></div>
@@ -1572,37 +1643,316 @@ const menuData = {
 <h4>💊 Treatment</h4>
 <div class="price-row"><span>Basic</span><span>₩50,000~</span></div>
 <div class="price-row"><span>Premium</span><span>₩80,000~</span></div>
-<p class="note">* 가격은 길이/모량에 따라 달라질 수 있습니다.<br>* 정확한 가격은 상담 후 안내드립니다.</p>`,
-
+<p class="note">* Prices may vary depending on hair length and volume.<br>* Exact pricing will be provided after consultation.</p>`,
   spa: `<h4>💆 Head Spa</h4>
 <div class="price-row"><span>Basic (30min)</span><span>₩60,000</span></div>
 <div class="price-row"><span>Premium (60min)</span><span>₩100,000</span></div>
 <div class="price-row"><span>Scalp scaling + Spa</span><span>₩120,000</span></div>`,
-
   photo: `<h4>📸 Profile / ID Photo</h4>
-<div class="price-row"><span>증명사진 (ID)</span><span>₩60,000</span></div>
-<div class="price-row"><span>프로필 촬영</span><span>₩120,000</span></div>
-<div class="price-row"><span>커플 촬영</span><span>₩220,000</span></div>
+<div class="price-row"><span>ID Photo</span><span>₩60,000</span></div>
+<div class="price-row"><span>Profile Photo</span><span>₩120,000</span></div>
+<div class="price-row"><span>Couple Photo</span><span>₩220,000</span></div>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
 <p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
-
-  booking: `<h4>📅 예약하기 / Reservation</h4>
+  booking: `<h4>📅 Reservation</h4>
 <p class="note" style="margin-bottom:0.8rem;">
-• 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.<br>
-• 1시간 이내에 예약금 결제가 가능하시면 아래 내용을 작성해 주세요.<br>
-• 총금액에서 예약금을 제외한 나머지 금액을 현장에서 결제합니다.<br>
-• 예약금 결제 후 스크린샷을 꼭 이곳에 남겨주세요. 그렇지 못할 경우 예약이 확정되지 않습니다.
+• Cancellations and refunds are available until 6:00 PM (KST), two days before the appointment.<br>
+• If you can pay the deposit within 1 hour, please fill out the form below.<br>
+• The remaining balance (total minus deposit) will be paid on-site.<br>
+• Please send a screenshot of your payment here. Your reservation will not be confirmed without it.
 </p>
 <div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
-<p><b>날짜 :</b> 월 / 일 ( 요일 )</p>
-<p><b>시간 :</b></p>
-<p><b>이름(영문) :</b></p>
-<p><b>인원 :</b></p>
-<p><b>원하시는 서비스 :</b></p>
-<p><b>결제 방법 :</b></p>
-<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
-<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">📋 복사하기 (Copy)</button>`
+<p><b>Date :</b> Month / Day ( Day of week )</p>
+<p><b>Time :</b></p>
+<p><b>Name :</b></p>
+<p><b>Number of guests :</b></p>
+<p><b>Service :</b></p>
+<p><b>Payment method :</b></p>
+<p class="note">🇨🇳 China : WeChat Pay, Alipay<br>🇯🇵 Japan : Bank transfer (PayPay Bank)<br>💳 Others : Credit card</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ Fill in Chat</button>`
+},
+
+zh: {
+  makeup: `<h4>💄 [ 女士 - 化妆 ]</h4>
+<div class="price-row"><span>A (日常妆)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (偶像/写真妆)</span><span>₩110,000</span></div>
+<h4>🤵 [ 男士 - 化妆 ]</h4>
+<div class="price-row"><span>A (日常妆)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (偶像/写真妆)</span><span>₩90,000</span></div>
+<h4>📚 [ 化妆课程 ]</h4>
+<div class="price-row"><span>90分钟</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ 发型造型 (Setting)</h4>
+<p class="note">(+ 洗发 +₩20,000)</p>
+<div class="price-row"><span>[ 女士 ] A (日常)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (半扎发)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (盘发)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ 男士 ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ 早间附加费 (上午10点前)</h4>
+<div class="price-row"><span>AM 9:00 发型</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 化妆</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 发型</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 化妆</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 发型</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 化妆</span><span>+₩30,000</span></div>`,
+  hair: `<h4>✂️ 剪发</h4>
+<div class="price-row"><span>女士剪发</span><span>₩60,000~</span></div>
+<div class="price-row"><span>男士剪发</span><span>₩50,000~</span></div>
+<h4>🎨 染发</h4>
+<div class="price-row"><span>全头染</span><span>₩120,000~</span></div>
+<div class="price-row"><span>补染发根</span><span>₩90,000~</span></div>
+<div class="price-row"><span>漂发</span><span>₩100,000~</span></div>
+<div class="price-row"><span>男士染发</span><span>₩120,000~</span></div>
+<h4>🌀 烫发</h4>
+<div class="price-row"><span>造型烫</span><span>₩140,000~</span></div>
+<div class="price-row"><span>柔顺烫</span><span>₩120,000~</span></div>
+<div class="price-row"><span>拉直</span><span>₩180,000~</span></div>
+<div class="price-row"><span>男士烫发</span><span>₩140,000~</span></div>
+<h4>💊 护理</h4>
+<div class="price-row"><span>基础护理</span><span>₩50,000~</span></div>
+<div class="price-row"><span>高级护理</span><span>₩80,000~</span></div>
+<p class="note">* 价格可能因发长/发量而有所不同。<br>* 准确价格将在咨询后告知。</p>`,
+  spa: `<h4>💆 头部水疗</h4>
+<div class="price-row"><span>基础 (30分钟)</span><span>₩60,000</span></div>
+<div class="price-row"><span>高级 (60分钟)</span><span>₩100,000</span></div>
+<div class="price-row"><span>头皮去角质 + 水疗</span><span>₩120,000</span></div>`,
+  photo: `<h4>📸 证件照 / 写真</h4>
+<div class="price-row"><span>证件照</span><span>₩60,000</span></div>
+<div class="price-row"><span>个人写真</span><span>₩120,000</span></div>
+<div class="price-row"><span>情侣写真</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+  booking: `<h4>📅 预约</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• 可在预约日前2天下午6点(KST)前取消并退款。<br>
+• 如果您可以在1小时内支付预约金，请填写以下内容。<br>
+• 总金额减去预约金后的余额在现场支付。<br>
+• 付款后请务必在此发送截图，否则预约将无法确认。
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>日期 :</b> 月 / 日 ( 星期 )</p>
+<p><b>时间 :</b></p>
+<p><b>姓名(英文) :</b></p>
+<p><b>人数 :</b></p>
+<p><b>希望的服务 :</b></p>
+<p><b>付款方式 :</b></p>
+<p class="note">🇨🇳 中国 : 微信支付、支付宝<br>🇯🇵 日本 : 银行转账 (PayPay银行)<br>💳 通用 : 信用卡</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ 填写到聊天</button>`
+},
+
+ja: {
+  makeup: `<h4>💄 [ レディース - メイク ]</h4>
+<div class="price-row"><span>A (デイリー)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (アイドル/撮影)</span><span>₩110,000</span></div>
+<h4>🤵 [ メンズ - メイク ]</h4>
+<div class="price-row"><span>A (デイリー)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (アイドル/撮影)</span><span>₩90,000</span></div>
+<h4>📚 [ メイクレッスン ]</h4>
+<div class="price-row"><span>90分</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ ヘアセッティング</h4>
+<p class="note">(+ シャンプー +₩20,000)</p>
+<div class="price-row"><span>[ レディース ] A (デイリー)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (ハーフアップ)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (アップスタイル)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ メンズ ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ 早朝料金 (午前10時前)</h4>
+<div class="price-row"><span>AM 9:00 ヘア</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 メイク</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 ヘア</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 メイク</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 ヘア</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 メイク</span><span>+₩30,000</span></div>`,
+  hair: `<h4>✂️ カット</h4>
+<div class="price-row"><span>レディースカット</span><span>₩60,000~</span></div>
+<div class="price-row"><span>メンズカット</span><span>₩50,000~</span></div>
+<h4>🎨 カラー</h4>
+<div class="price-row"><span>全体カラー</span><span>₩120,000~</span></div>
+<div class="price-row"><span>リタッチ</span><span>₩90,000~</span></div>
+<div class="price-row"><span>ブリーチ</span><span>₩100,000~</span></div>
+<div class="price-row"><span>メンズカラー</span><span>₩120,000~</span></div>
+<h4>🌀 パーマ</h4>
+<div class="price-row"><span>セッティングパーマ</span><span>₩140,000~</span></div>
+<div class="price-row"><span>ダウンパーマ</span><span>₩120,000~</span></div>
+<div class="price-row"><span>ストレート</span><span>₩180,000~</span></div>
+<div class="price-row"><span>メンズパーマ</span><span>₩140,000~</span></div>
+<h4>💊 トリートメント</h4>
+<div class="price-row"><span>ベーシック</span><span>₩50,000~</span></div>
+<div class="price-row"><span>プレミアム</span><span>₩80,000~</span></div>
+<p class="note">* 価格は髪の長さ・量によって異なる場合があります。<br>* 正確な価格はカウンセリング後にご案内いたします。</p>`,
+  spa: `<h4>💆 ヘッドスパ</h4>
+<div class="price-row"><span>ベーシック (30分)</span><span>₩60,000</span></div>
+<div class="price-row"><span>プレミアム (60分)</span><span>₩100,000</span></div>
+<div class="price-row"><span>頭皮スケーリング + スパ</span><span>₩120,000</span></div>`,
+  photo: `<h4>📸 プロフィール / 証明写真</h4>
+<div class="price-row"><span>証明写真</span><span>₩60,000</span></div>
+<div class="price-row"><span>プロフィール撮影</span><span>₩120,000</span></div>
+<div class="price-row"><span>カップル撮影</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+  booking: `<h4>📅 ご予約</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• ご予約日の2日前18:00(KST)までキャンセル・返金が可能です。<br>
+• 1時間以内に予約金のお支払いが可能な方は、以下の内容をご記入ください。<br>
+• 総額から予約金を差し引いた残額は現地でお支払いいただきます。<br>
+• お支払い後、スクリーンショットを必ずこちらにお送りください。確認できない場合、予約が確定されません。
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>日付 :</b> 月 / 日 ( 曜日 )</p>
+<p><b>時間 :</b></p>
+<p><b>お名前(英語) :</b></p>
+<p><b>人数 :</b></p>
+<p><b>ご希望のサービス :</b></p>
+<p><b>お支払い方法 :</b></p>
+<p class="note">🇨🇳 中国 : WeChat Pay、Alipay<br>🇯🇵 日本 : 銀行振込 (PayPay銀行)<br>💳 共通 : クレジットカード</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ チャットに入力</button>`
+},
+
+th: {
+  makeup: `<h4>💄 [ ผู้หญิง - แต่งหน้า ]</h4>
+<div class="price-row"><span>A (แต่งหน้าทั่วไป)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (ไอดอล/ถ่ายแบบ)</span><span>₩110,000</span></div>
+<h4>🤵 [ ผู้ชาย - แต่งหน้า ]</h4>
+<div class="price-row"><span>A (แต่งหน้าทั่วไป)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (ไอดอล/ถ่ายแบบ)</span><span>₩90,000</span></div>
+<h4>📚 [ สอนแต่งหน้า ]</h4>
+<div class="price-row"><span>90 นาที</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ จัดแต่งทรงผม (Setting)</h4>
+<p class="note">(+ สระผม +₩20,000)</p>
+<div class="price-row"><span>[ ผู้หญิง ] A (ทั่วไป)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (รวบครึ่ง)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (เกล้าผม)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ ผู้ชาย ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ ค่าบริการช่วงเช้า (ก่อน 10:00 น.)</h4>
+<div class="price-row"><span>AM 9:00 ผม</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 แต่งหน้า</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 ผม</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 แต่งหน้า</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 ผม</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 แต่งหน้า</span><span>+₩30,000</span></div>`,
+  hair: `<h4>✂️ ตัดผม</h4>
+<div class="price-row"><span>ตัดผมผู้หญิง</span><span>₩60,000~</span></div>
+<div class="price-row"><span>ตัดผมผู้ชาย</span><span>₩50,000~</span></div>
+<h4>🎨 ทำสีผม</h4>
+<div class="price-row"><span>ทำสีทั้งหัว</span><span>₩120,000~</span></div>
+<div class="price-row"><span>เติมโคน</span><span>₩90,000~</span></div>
+<div class="price-row"><span>ฟอกสี</span><span>₩100,000~</span></div>
+<div class="price-row"><span>ทำสีผู้ชาย</span><span>₩120,000~</span></div>
+<h4>🌀 ดัดผม</h4>
+<div class="price-row"><span>ดัดเซ็ตติ้ง</span><span>₩140,000~</span></div>
+<div class="price-row"><span>ดัดดาวน์</span><span>₩120,000~</span></div>
+<div class="price-row"><span>ยืดผม</span><span>₩180,000~</span></div>
+<div class="price-row"><span>ดัดผมผู้ชาย</span><span>₩140,000~</span></div>
+<h4>💊 ทรีตเมนต์</h4>
+<div class="price-row"><span>พื้นฐาน</span><span>₩50,000~</span></div>
+<div class="price-row"><span>พรีเมียม</span><span>₩80,000~</span></div>
+<p class="note">* ราคาอาจแตกต่างตามความยาวและปริมาณเส้นผม<br>* ราคาที่แน่นอนจะแจ้งหลังจากปรึกษา</p>`,
+  spa: `<h4>💆 เฮดสปา</h4>
+<div class="price-row"><span>พื้นฐาน (30 นาที)</span><span>₩60,000</span></div>
+<div class="price-row"><span>พรีเมียม (60 นาที)</span><span>₩100,000</span></div>
+<div class="price-row"><span>สครับหนังศีรษะ + สปา</span><span>₩120,000</span></div>`,
+  photo: `<h4>📸 โปรไฟล์ / รูปถ่ายบัตร</h4>
+<div class="price-row"><span>รูปถ่ายบัตร (ID)</span><span>₩60,000</span></div>
+<div class="price-row"><span>ถ่ายโปรไฟล์</span><span>₩120,000</span></div>
+<div class="price-row"><span>ถ่ายคู่รัก</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+  booking: `<h4>📅 จองคิว</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• สามารถยกเลิกและขอคืนเงินได้ก่อน 18:00 น. (KST) 2 วันก่อนวันนัดหมาย<br>
+• หากสามารถชำระเงินมัดจำภายใน 1 ชั่วโมง กรุณากรอกข้อมูลด้านล่าง<br>
+• ยอดที่เหลือ (ยอมรวม - เงินมัดจำ) ชำระที่ร้าน<br>
+• กรุณาส่งภาพหน้าจอการชำระเงินที่นี่ หากไม่ส่งจะไม่สามารถยืนยันการจองได้
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>วันที่ :</b> เดือน / วัน ( วัน )</p>
+<p><b>เวลา :</b></p>
+<p><b>ชื่อ(ภาษาอังกฤษ) :</b></p>
+<p><b>จำนวนคน :</b></p>
+<p><b>บริการที่ต้องการ :</b></p>
+<p><b>วิธีชำระเงิน :</b></p>
+<p class="note">🇨🇳 จีน : WeChat Pay, Alipay<br>🇯🇵 ญี่ปุ่น : โอนเงิน (PayPay Bank)<br>💳 ทั่วไป : บัตรเครดิต</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ กรอกในแชท</button>`
+},
+
+vi: {
+  makeup: `<h4>💄 [ Nữ - Trang điểm ]</h4>
+<div class="price-row"><span>A (hàng ngày)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (idol/chụp ảnh)</span><span>₩110,000</span></div>
+<h4>🤵 [ Nam - Trang điểm ]</h4>
+<div class="price-row"><span>A (hàng ngày)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (idol/chụp ảnh)</span><span>₩90,000</span></div>
+<h4>📚 [ Học trang điểm ]</h4>
+<div class="price-row"><span>90 phút</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ Tạo kiểu tóc (Setting)</h4>
+<p class="note">(+ gội đầu +₩20,000)</p>
+<div class="price-row"><span>[ Nữ ] A (hàng ngày)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (búi nửa đầu)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (búi cao)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ Nam ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ Phụ thu buổi sáng (trước 10:00)</h4>
+<div class="price-row"><span>AM 9:00 Tóc</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 Trang điểm</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 Tóc</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 Trang điểm</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 Tóc</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 Trang điểm</span><span>+₩30,000</span></div>`,
+  hair: `<h4>✂️ Cắt tóc</h4>
+<div class="price-row"><span>Cắt tóc nữ</span><span>₩60,000~</span></div>
+<div class="price-row"><span>Cắt tóc nam</span><span>₩50,000~</span></div>
+<h4>🎨 Nhuộm tóc</h4>
+<div class="price-row"><span>Nhuộm toàn bộ</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Nhuộm chân tóc</span><span>₩90,000~</span></div>
+<div class="price-row"><span>Tẩy tóc</span><span>₩100,000~</span></div>
+<div class="price-row"><span>Nhuộm nam</span><span>₩120,000~</span></div>
+<h4>🌀 Uốn tóc</h4>
+<div class="price-row"><span>Uốn setting</span><span>₩140,000~</span></div>
+<div class="price-row"><span>Uốn down</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Duỗi tóc</span><span>₩180,000~</span></div>
+<div class="price-row"><span>Uốn nam</span><span>₩140,000~</span></div>
+<h4>💊 Phục hồi tóc</h4>
+<div class="price-row"><span>Cơ bản</span><span>₩50,000~</span></div>
+<div class="price-row"><span>Cao cấp</span><span>₩80,000~</span></div>
+<p class="note">* Giá có thể thay đổi tùy theo độ dài và lượng tóc.<br>* Giá chính xác sẽ được thông báo sau khi tư vấn.</p>`,
+  spa: `<h4>💆 Head Spa</h4>
+<div class="price-row"><span>Cơ bản (30 phút)</span><span>₩60,000</span></div>
+<div class="price-row"><span>Cao cấp (60 phút)</span><span>₩100,000</span></div>
+<div class="price-row"><span>Tẩy tế bào da đầu + Spa</span><span>₩120,000</span></div>`,
+  photo: `<h4>📸 Ảnh profile / Ảnh thẻ</h4>
+<div class="price-row"><span>Ảnh thẻ (ID)</span><span>₩60,000</span></div>
+<div class="price-row"><span>Chụp ảnh profile</span><span>₩120,000</span></div>
+<div class="price-row"><span>Chụp ảnh cặp đôi</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+  booking: `<h4>📅 Đặt lịch</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• Có thể hủy và hoàn tiền trước 18:00 (KST), 2 ngày trước ngày hẹn.<br>
+• Nếu bạn có thể thanh toán tiền cọc trong vòng 1 giờ, vui lòng điền thông tin bên dưới.<br>
+• Số tiền còn lại (tổng - tiền cọc) sẽ thanh toán tại cửa hàng.<br>
+• Vui lòng gửi ảnh chụp màn hình thanh toán tại đây. Nếu không gửi, đặt lịch sẽ không được xác nhận.
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>Ngày :</b> Tháng / Ngày ( Thứ )</p>
+<p><b>Giờ :</b></p>
+<p><b>Tên (tiếng Anh) :</b></p>
+<p><b>Số người :</b></p>
+<p><b>Dịch vụ mong muốn :</b></p>
+<p><b>Phương thức thanh toán :</b></p>
+<p class="note">🇨🇳 Trung Quốc : WeChat Pay, Alipay<br>🇯🇵 Nhật Bản : Chuyển khoản (PayPay Bank)<br>💳 Chung : Thẻ tín dụng</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">✏️ Điền vào chat</button>`
+}
 };
+
+// 현재 언어에 맞는 메뉴 데이터 가져오기
+function getMenuData() {
+  return menuDataByLang[currentLang] || menuDataByLang['en'];
+}
 
 function showMenu(tab) {
   document.querySelectorAll('.menu-tab').forEach(t => {
@@ -1611,7 +1961,8 @@ function showMenu(tab) {
       t.classList.add('active');
     }
   });
-  document.getElementById('menuContent').innerHTML = menuData[tab] || '';
+  const data = getMenuData();
+  document.getElementById('menuContent').innerHTML = data[tab] || '';
 }
 
 function showPriceMenu() { toggleMobileMenu(); }
@@ -1629,18 +1980,28 @@ function closeMobileMenu() {
   document.getElementById('menuOverlay').classList.remove('active');
 }
 
+function fillBookingForm() {
+  const forms = {
+    ko: `날짜 : 월 / 일 ( 요일 )\n시간 :\n이름(영문) :\n인원 :\n원하시는 서비스 :\n결제 방법 :`,
+    en: `Date : Month / Day ( Day of week )\nTime :\nName :\nNumber of guests :\nService :\nPayment method :`,
+    zh: `日期 : 月 / 日 ( 星期 )\n时间 :\n姓名(英文) :\n人数 :\n希望的服务 :\n付款方式 :`,
+    ja: `日付 : 月 / 日 ( 曜日 )\n時間 :\nお名前(英語) :\n人数 :\nご希望のサービス :\nお支払い方法 :`,
+    th: `วันที่ : เดือน / วัน ( วัน )\nเวลา :\nชื่อ(ภาษาอังกฤษ) :\nจำนวนคน :\nบริการที่ต้องการ :\nวิธีชำระเงิน :`,
+    vi: `Ngày : Tháng / Ngày ( Thứ )\nGiờ :\nTên (tiếng Anh) :\nSố người :\nDịch vụ mong muốn :\nPhương thức thanh toán :`
+  };
+  const form = forms[currentLang] || forms['en'];
+  const input = document.getElementById('chatInput');
+  if (input) {
+    input.value = form;
+    input.focus();
+    autoResize(input);
+    // 사이드바 닫기
+    closeMobileMenu();
+  }
+}
+
 function copyBookingForm() {
-  const text = `날짜 : 월 / 일 ( 요일 )
-시간 :
-이름(영문) :
-인원 :
-원하시는 서비스 :
-결제 방법 :`;
-  const btn = document.querySelector('[onclick="copyBookingForm()"]');
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ 복사완료!';
-    setTimeout(() => { btn.textContent = '📋 복사하기 (Copy)'; }, 2000);
-  });
+  fillBookingForm();
 }
 
 // ========================================

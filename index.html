@@ -582,8 +582,30 @@ const T = {
 };
 
 // ========================================
-// 예약 확인 메시지 템플릿
+// GPT 번역 함수
 // ========================================
+async function translateText(text, targetLang) {
+  if (!text || !targetLang) return text;
+  // 한국어→한국어는 스킵
+  if (targetLang === 'ko' && /[가-힣]/.test(text)) return text;
+  // 이미 대상 언어면 스킵 (간단 체크)
+  if (targetLang === 'zh' && /[\u4e00-\u9fff]/.test(text) && !/[가-힣]/.test(text)) return text;
+  if (targetLang === 'ja' && /[\u3040-\u30ff]/.test(text)) return text;
+  if (targetLang === 'th' && /[\u0e00-\u0e7f]/.test(text)) return text;
+  
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, targetLang })
+    });
+    const data = await res.json();
+    return data.translated || text;
+  } catch (e) {
+    console.error('Translation error:', e);
+    return text;
+  }
+}
 const WECHAT_QR = 'data:image/jpeg;base64,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';
 
 const quickConfirmed = `[CENTER]━━━━━━━━━━━━━━━━[/CENTER]
@@ -860,19 +882,21 @@ async function initAdminRoom() {
   
   const snap = await db.ref('rooms/' + roomId).once('value');
   if (!snap.exists()) {
-    const welcomeMsg = '안녕하세요 뷰티샵 [ 말랑 ] 입니다\n\n상단의 Price 버튼을 누르면 가격과 예약양식이 나옵니다\n가격 확인 후 예약 양식을 입력해 주세요';
+    const welcomeKo = '안녕하세요 뷰티샵 [ 말랑 ] 입니다\n\n상단의 Price 버튼을 누르면 가격과 예약양식이 나옵니다\n가격 확인 후 예약 양식을 입력해 주세요';
+    const welcomeTranslated = (currentLang !== 'ko') ? await translateText(welcomeKo, currentLang) : welcomeKo;
     await db.ref('rooms/' + roomId).set({
       userName: currentUser.displayName || 'Guest',
       userEmail: currentUser.email || '',
       userLang: currentLang,
       userId: uid,
-      lastMessage: welcomeMsg,
+      lastMessage: welcomeKo,
       lastMessageTime: Date.now(),
       unreadCount: 0
     });
     // 웰컴 메시지 전송
     await db.ref('rooms/' + roomId + '/messages').push({
-      text: welcomeMsg,
+      text: welcomeKo,
+      translated: welcomeTranslated,
       isStaff: true,
       timestamp: Date.now()
     });
@@ -1052,7 +1076,10 @@ function listenAdminMessages() {
   db.ref('rooms/' + currentChatId + '/messages').on('child_added', snap => {
     const msg = snap.val();
     if (!msg || msg.deleted) return;
-    appendMessage(container, msg.text, msg.imageUrl, !msg.isStaff, msg.timestamp, snap.key);
+    const isMine = !msg.isStaff;
+    // 고객은 스태프 메시지의 번역본을, 자신의 메시지는 원문을 봄
+    const displayText = isMine ? msg.text : (msg.translated || msg.text);
+    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key);
   });
 }
 
@@ -1068,7 +1095,9 @@ function listenDirectMessages() {
     const msg = snap.val();
     if (!msg || msg.deleted) return;
     const isMine = msg.sender === currentUser.uid;
-    appendMessage(container, msg.text, msg.imageUrl, isMine, msg.timestamp, snap.key);
+    // 상대방 메시지는 번역본을, 자신의 메시지는 원문을 봄
+    const displayText = isMine ? msg.text : (msg.translated || msg.text);
+    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key);
   });
 }
 
@@ -1134,9 +1163,10 @@ async function sendChatMsg() {
   
   try {
     if (currentChatType === 'admin') {
-      // 관리자 채팅 (기존 구조)
+      // 관리자 채팅: 고객 메시지를 한국어로 번역
+      const translated = (text && currentLang !== 'ko') ? await translateText(text, 'ko') : text;
       await db.ref('rooms/' + currentChatId + '/messages').push({
-        text: text || '', imageUrl: imageUrl || null, isStaff: false, timestamp: Date.now()
+        text: text || '', translated: translated || '', imageUrl: imageUrl || null, isStaff: false, timestamp: Date.now()
       });
       await db.ref('rooms/' + currentChatId).update({
         lastMessage: imageUrl ? '📷 사진' : text,
@@ -1144,10 +1174,18 @@ async function sendChatMsg() {
         unreadCount: firebase.database.ServerValue.increment(1)
       });
     } else {
-      // 1:1 채팅
+      // 1:1 채팅: 내 메시지를 상대 언어로 번역
+      let partnerLang = 'ko';
+      if (currentChatPartner) {
+        const pSnap = await db.ref('users/' + currentChatPartner).once('value');
+        const pData = pSnap.val();
+        partnerLang = pData?.lang || 'ko';
+      }
+      const translated = (text && currentLang !== partnerLang) ? await translateText(text, partnerLang) : text;
       await db.ref('chats/' + currentChatId + '/messages').push({
         sender: currentUser.uid,
         text: text || '',
+        translated: translated || '',
         imageUrl: imageUrl || null,
         timestamp: Date.now()
       });
@@ -1391,7 +1429,9 @@ function listenStaffMessages(roomId) {
     
     let content = '';
     if (msg.imageUrl) content += `<img src="${msg.imageUrl}" class="msg-img" onclick="window.open('${msg.imageUrl}','_blank')">`;
-    if (msg.text) content += renderMessage(msg.text);
+    // 스태프는 고객 메시지의 번역본(한국어)을, 자신의 메시지는 원문을 봄
+    const displayText = msg.isStaff ? msg.text : (msg.translated || msg.text);
+    if (displayText) content += renderMessage(displayText);
     
     div.innerHTML = `
       <div class="msg-bubble" style="position:relative;">${deleteBtn}${content}</div>
@@ -1424,8 +1464,16 @@ async function sendStaffMsg() {
   input.style.height = 'auto';
   
   try {
+    // 선택된 고객의 언어 가져오기
+    const roomSnap = await db.ref('rooms/' + selectedRoomId).once('value');
+    const roomData = roomSnap.val();
+    const customerLang = roomData?.userLang || 'ko';
+    
+    // 고객 언어로 번역
+    const translated = (customerLang !== 'ko') ? await translateText(text, customerLang) : text;
+    
     await db.ref('rooms/' + selectedRoomId + '/messages').push({
-      text: text, isStaff: true, timestamp: Date.now()
+      text: text, translated: translated, isStaff: true, timestamp: Date.now()
     });
     await db.ref('rooms/' + selectedRoomId).update({
       lastMessage: text, lastMessageTime: Date.now()
@@ -1463,7 +1511,7 @@ function quickReply(key) {
     const jpy = Math.ceil(w / 8.9 / 100) * 100;
     input.value = `🇯🇵 予約金のご案内\n\n予約金 : ${w.toLocaleString()} won ( ${jpy.toLocaleString()} 円 )\n\npaypay銀行(0033)\nはやぶさ支店(003)\n普通7862427\nキムジョンヒ\n\n* 支払い後の詳細(画面)をお願いします *\n\n• 総お支払い金額 − 予約金 ＝ 当日現地決済\n• 予約金のお支払い完了後、予約が確定となります。\n• 30分以内にお支払いが確認できない場合、予約は自動キャンセルとなります。\n• ご予約日の2日前18:00(KST)までキャンセル可能です。`;
   } else if (key === 'address') {
-    input.value = `📍 [ Address ]\n21-3, Seolleung-ro 161-gil, Gangnam-gu, Seoul\n(서울시 강남구 신사동 662-10)\n\n[DIRECTIONS_BTN]`;
+    input.value = `📍 [ Address / 地址 ]\n\n서울시 강남구 신사동 662-10\n21-3, Seolleung-ro 161-gil, Gangnam-gu, Seoul\n首尔特别市江南区新沙洞 662-10\n\n🚇 수인분당선 압구정로데오역 6번출구\n\n[INSTAGRAM_BTN]\n[XIAOHONGSHU_BTN]`;
   } else if (key === 'confirmed') {
     const info = prompt('고객 예약 정보 입력\n(예: 3/15(토) 14:00 / Yuki / 메이크업A+헤어B)');
     if (!info) return;
@@ -1616,7 +1664,7 @@ function formatTime(ts) {
 
 function previewText(text) {
   if (!text) return '새로운 대화';
-  let t = text.replace(/\[WECHAT_QR\]/g, '🇨🇳 위챗페이').replace(/\[DIRECTIONS_BTN\]/g, '').replace(/\n/g, ' ').trim();
+  let t = text.replace(/\[WECHAT_QR\]/g, '🇨🇳 위챗페이').replace(/\[DIRECTIONS_BTN\]/g, '').replace(/\[INSTAGRAM_BTN\]/g, '').replace(/\[XIAOHONGSHU_BTN\]/g, '').replace(/\n/g, ' ').trim();
   if (t.length > 35) t = t.substring(0, 35) + '...';
   return escapeHtml(t);
 }
@@ -1633,6 +1681,8 @@ function renderMessage(text) {
   html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="msg-link">$1</a>');
   html = html.replace('[WECHAT_QR]', '<img src="' + WECHAT_QR + '" class="msg-img" alt="WeChat Pay QR">');
   html = html.replace('[DIRECTIONS_BTN]', '<a href="https://www.instagram.com/reel/DIvxoGwy482/?igsh=MTI5cW8wM3MwNGM1OA==" target="_blank" class="msg-link-btn">📍 How to get here (Video)</a>');
+  html = html.replace('[INSTAGRAM_BTN]', '<a href="https://www.instagram.com/reel/DIvxoGwy482/?igsh=MTI5cW8wM3MwNGM1OA==" target="_blank" class="msg-link-btn">📍 오는길 Instagram</a>');
+  html = html.replace('[XIAOHONGSHU_BTN]', '<a href="http://xhslink.com/n/5EjZsrAK2SA" target="_blank" class="msg-link-btn" style="background:#FF4040;">📍 到店路线 小红书</a>');
   html = html.replace(/\*\*(.+?)\*\*/g, '<span class="msg-highlight">$1</span>');
   html = html.replace(/\[CENTER\](.*?)\[\/CENTER\]\n?/g, '<div style="text-align:center;margin:-0.2em 0;padding:0;line-height:1.2;">$1</div>');
   html = html.replace(/\n/g, '<br>');

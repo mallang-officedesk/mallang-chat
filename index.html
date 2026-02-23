@@ -639,6 +639,11 @@ const quickConfirmed = `[CENTER]━━━━━━━━━━━━━━━━
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // 화면 전환 시 에러 메시지 숨기기
+  const loginErr = document.getElementById('loginError');
+  const signupErr = document.getElementById('signupError');
+  if (loginErr) loginErr.style.display = 'none';
+  if (signupErr) signupErr.style.display = 'none';
 }
 
 // ========================================
@@ -665,10 +670,18 @@ function setRole(role) {
 // ========================================
 // 언어 선택 (고객용)
 // ========================================
+let justSelectedLang = false; // 언어 선택 화면에서 선택했는지
+
 function selectLang(lang) {
   currentLang = lang;
+  justSelectedLang = true;
   if (currentUser && currentUserData) {
-    // 이미 로그인된 상태
+    // 이미 로그인된 상태 - DB 언어 업데이트
+    db.ref('users/' + currentUser.uid).update({ lang: currentLang });
+    if (currentUserData.adminRoomId) {
+      db.ref('rooms/' + currentUserData.adminRoomId).update({ userLang: currentLang });
+    }
+    currentUserData.lang = currentLang;
     if (currentUserData.role !== 'designer') {
       initAdminRoom();
     }
@@ -692,11 +705,27 @@ auth.onAuthStateChanged(async (user) => {
   if (isSigningUp) return; // 회원가입 중에는 무시
   if (user) {
     currentUser = user;
-    const snap = await db.ref('users/' + user.uid).once('value');
-    currentUserData = snap.val();
+    try {
+      const snap = await db.ref('users/' + user.uid).once('value');
+      currentUserData = snap.val();
+    } catch (e) {
+      console.error('사용자 데이터 로드 실패:', e);
+      showScreen('langScreen');
+      return;
+    }
     
     if (currentUserData) {
-      currentLang = currentUserData.lang || 'en';
+      // 방금 언어를 선택했으면 그 언어 유지하고 DB 업데이트
+      if (justSelectedLang) {
+        await db.ref('users/' + user.uid).update({ lang: currentLang });
+        if (currentUserData.adminRoomId) {
+          await db.ref('rooms/' + currentUserData.adminRoomId).update({ userLang: currentLang });
+        }
+        currentUserData.lang = currentLang;
+        justSelectedLang = false;
+      } else {
+        currentLang = currentUserData.lang || 'en';
+      }
       
       // 기존 고객에게 friendCode가 없으면 자동 생성
       if (currentUserData.role !== 'designer' && !currentUserData.friendCode) {

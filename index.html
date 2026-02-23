@@ -201,6 +201,14 @@ body {
   margin: 4px 0;
   font-size: 0.85rem;
 }
+.msg-original-toggle {
+  font-size: 0.7rem; color: #999; cursor: pointer; margin-top: 0.4rem; text-align: right;
+}
+.msg-original-toggle:hover { color: #666; text-decoration: underline; }
+.msg-original {
+  margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px dashed #DDD;
+  font-size: 0.85rem; color: #888;
+}
 
 /* === 입력 영역 === */
 .input-area {
@@ -490,12 +498,12 @@ body {
 <!-- 메뉴 사이드바 (전역 오버레이) -->
 <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
 <div class="menu-sidebar" id="menuSidebar">
-  <div class="menu-tabs">
-    <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
-    <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
-    <div class="menu-tab" onclick="showMenu('spa')">🧖 스파</div>
-    <div class="menu-tab" onclick="showMenu('photo')">📷 포토</div>
-    <div class="menu-tab" onclick="showMenu('booking')">📅 예약하기</div>
+  <div class="menu-tabs" id="menuTabs">
+    <div class="menu-tab active" data-tab="makeup" onclick="showMenu('makeup')">💄 메이크업</div>
+    <div class="menu-tab" data-tab="hair" onclick="showMenu('hair')">💇 헤어</div>
+    <div class="menu-tab" data-tab="spa" onclick="showMenu('spa')">🧖 스파</div>
+    <div class="menu-tab" data-tab="photo" onclick="showMenu('photo')">📷 포토</div>
+    <div class="menu-tab" data-tab="booking" onclick="showMenu('booking')">📅 예약하기</div>
   </div>
   <div class="menu-content" id="menuContent"></div>
 </div>
@@ -1088,7 +1096,8 @@ function listenAdminMessages() {
     const isMine = !msg.isStaff;
     // 고객은 스태프 메시지의 번역본을, 자신의 메시지는 원문을 봄
     const displayText = isMine ? msg.text : (msg.translated || msg.text);
-    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key);
+    const originalText = isMine ? null : (msg.translated && msg.translated !== msg.text ? msg.text : null);
+    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key, originalText);
   });
 }
 
@@ -1106,14 +1115,15 @@ function listenDirectMessages() {
     const isMine = msg.sender === currentUser.uid;
     // 상대방 메시지는 번역본을, 자신의 메시지는 원문을 봄
     const displayText = isMine ? msg.text : (msg.translated || msg.text);
-    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key);
+    const originalText = isMine ? null : (msg.translated && msg.translated !== msg.text ? msg.text : null);
+    appendMessage(container, displayText, msg.imageUrl, isMine, msg.timestamp, snap.key, originalText);
   });
 }
 
 // ========================================
 // 메시지 UI 추가
 // ========================================
-function appendMessage(container, text, imageUrl, isMine, timestamp, msgKey) {
+function appendMessage(container, text, imageUrl, isMine, timestamp, msgKey, originalText) {
   const div = document.createElement('div');
   div.className = 'message ' + (isMine ? 'from-me' : 'from-them');
   div.id = 'msg-' + msgKey;
@@ -1126,12 +1136,31 @@ function appendMessage(container, text, imageUrl, isMine, timestamp, msgKey) {
     content += renderMessage(text);
   }
   
+  let originalToggle = '';
+  if (originalText) {
+    const origId = 'orig-' + msgKey;
+    originalToggle = `<div class="msg-original-toggle" onclick="toggleOriginal('${origId}')">📄 원문 보기</div><div class="msg-original" id="${origId}" style="display:none;">${renderMessage(originalText)}</div>`;
+  }
+  
   div.innerHTML = `
-    <div class="msg-bubble">${content}</div>
+    <div class="msg-bubble">${content}${originalToggle}</div>
     <div class="msg-time">${formatTime(timestamp)}</div>
   `;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+}
+
+function toggleOriginal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const btn = el.previousElementSibling;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = '📄 번역 보기';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '📄 원문 보기';
+  }
 }
 
 // ========================================
@@ -1443,8 +1472,15 @@ function listenStaffMessages(roomId) {
     const displayText = msg.isStaff ? msg.text : (msg.translated || msg.text);
     if (displayText) content += renderMessage(displayText);
     
+    // 원문 보기 토글 (고객 메시지이고 번역본이 원문과 다를 때)
+    let originalToggle = '';
+    if (!msg.isStaff && msg.translated && msg.translated !== msg.text) {
+      const origId = 'orig-' + msgKey;
+      originalToggle = `<div class="msg-original-toggle" onclick="toggleOriginal('${origId}')">📄 원문 보기</div><div class="msg-original" id="${origId}" style="display:none;">${renderMessage(msg.text)}</div>`;
+    }
+    
     div.innerHTML = `
-      <div class="msg-bubble" style="position:relative;">${deleteBtn}${content}</div>
+      <div class="msg-bubble" style="position:relative;">${deleteBtn}${content}${originalToggle}</div>
       <div class="msg-time">${formatTime(msg.timestamp)}</div>
     `;
     container.appendChild(div);
@@ -1962,12 +1998,27 @@ function getMenuData() {
   return menuDataByLang[currentLang] || menuDataByLang['en'];
 }
 
+const tabNames = {
+  ko: { makeup: '💄 메이크업', hair: '💇 헤어', spa: '🧖 스파', photo: '📷 포토', booking: '📅 예약하기' },
+  en: { makeup: '💄 Makeup', hair: '💇 Hair', spa: '🧖 Spa', photo: '📷 Photo', booking: '📅 Booking' },
+  zh: { makeup: '💄 化妆', hair: '💇 美发', spa: '🧖 水疗', photo: '📷 写真', booking: '📅 预约' },
+  ja: { makeup: '💄 メイク', hair: '💇 ヘア', spa: '🧖 スパ', photo: '📷 フォト', booking: '📅 予約' },
+  th: { makeup: '💄 แต่งหน้า', hair: '💇 ทำผม', spa: '🧖 สปา', photo: '📷 ถ่ายรูป', booking: '📅 จองคิว' },
+  vi: { makeup: '💄 Trang điểm', hair: '💇 Tóc', spa: '🧖 Spa', photo: '📷 Ảnh', booking: '📅 Đặt lịch' }
+};
+
+function updateTabNames() {
+  const names = tabNames[currentLang] || tabNames['en'];
+  document.querySelectorAll('.menu-tab').forEach(t => {
+    const tab = t.dataset.tab;
+    if (tab && names[tab]) t.textContent = names[tab];
+  });
+}
+
 function showMenu(tab) {
   document.querySelectorAll('.menu-tab').forEach(t => {
     t.classList.remove('active');
-    if (t.textContent.includes(tab === 'makeup' ? '메이크업' : tab === 'hair' ? '헤어' : tab === 'spa' ? '스파' : tab === 'photo' ? '포토' : '예약')) {
-      t.classList.add('active');
-    }
+    if (t.dataset.tab === tab) t.classList.add('active');
   });
   const data = getMenuData();
   document.getElementById('menuContent').innerHTML = data[tab] || '';
@@ -1979,8 +2030,12 @@ function toggleMobileMenu() {
   const overlay = document.getElementById('menuOverlay');
   sidebar.classList.toggle('mobile-open');
   overlay.classList.toggle('active');
-  if (sidebar.classList.contains('mobile-open') && !document.getElementById('menuContent').innerHTML) {
-    showMenu('makeup');
+  if (sidebar.classList.contains('mobile-open')) {
+    updateTabNames();
+    // 현재 활성 탭 찾아서 새로고침
+    const activeTab = document.querySelector('.menu-tab.active');
+    const tab = activeTab ? activeTab.dataset.tab : 'makeup';
+    showMenu(tab);
   }
 }
 function closeMobileMenu() {

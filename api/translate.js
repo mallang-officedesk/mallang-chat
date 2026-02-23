@@ -45,27 +45,20 @@ export default async function handler(req, res) {
         max_tokens: 1000,
         messages: [
           {
-            role: 'system',
-            content: `Translate the following text to ${langName}. Output ONLY the translation, nothing else.
-
-Context: ${contextInfo}
-
-CRITICAL RULES:
-- Translate accurately preserving the original meaning and intent
-- NEVER add your own words, explanations, responses, or interpretations
-- NEVER answer or respond to the message - ONLY translate it
-- For example: "在吗" → "계세요?" (NOT an answer like "네, 있어요")
-- For example: "있어요" from staff → "在的" (NOT "在吗")
-- Keep proper nouns unchanged: MALLANG, PayPal, WeChat, Instagram, 小红书
-- Keep all URLs, links, tags like [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] unchanged
-- Keep numbers, prices (₩, won, USD, 円), dates, times unchanged
-- Keep emoji unchanged
-- If already in ${langName}, return unchanged
-- Use polite/formal tone`
-          },
-          {
             role: 'user',
-            content: text
+            content: `다음 문장을 ${langName}로 번역해줘. 번역 결과만 출력하고 다른 말은 하지 마.
+
+${contextInfo}
+
+규칙:
+- 번역 결과만 출력 (설명, 인사, 답변 금지)
+- MALLANG, PayPal, WeChat, Instagram, 小红书 등 고유명사 유지
+- URL, [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] 태그 유지
+- 숫자, 가격(₩, won, USD, 円), 날짜, 시간 유지
+- 이모지 유지
+- 정중한 존댓말 사용
+
+번역할 문장: ${text}`
           }
         ]
       })

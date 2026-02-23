@@ -929,13 +929,21 @@ function loadChatList() {
       const adminSnap = await db.ref('rooms/' + currentUserData.adminRoomId).once('value');
       const adminRoom = adminSnap.val();
       if (adminRoom) {
+        let preview = adminRoom.lastMessageTranslated || adminRoom.lastMessage || '새로운 대화';
+        // 기존 데이터에 번역본이 없으면 번역 시도
+        if (!adminRoom.lastMessageTranslated && currentLang !== 'ko' && adminRoom.lastMessage) {
+          translateText(adminRoom.lastMessage, currentLang).then(t => {
+            const previewEl = document.querySelector('.customer-preview');
+            if (previewEl) previewEl.textContent = t.substring(0, 50) + (t.length > 50 ? '...' : '');
+          });
+        }
         items.push({
           id: currentUserData.adminRoomId,
           type: 'admin',
           name: 'MALLANG',
           avatar: 'M',
           avatarClass: 'admin',
-          preview: adminRoom.lastMessageTranslated || adminRoom.lastMessage || '새로운 대화',
+          preview: preview,
           time: adminRoom.lastMessageTime || 0,
           unread: 0
         });

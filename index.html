@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { height: 100%; overflow: hidden; touch-action: pan-y; }
@@ -18,19 +19,24 @@ body {
   height: 100%;
   height: 100dvh;
 }
-.screen { display: none; height: 100%; width: 100%; overflow-x: hidden; }
-@supports (height: 100dvh) {
-  .screen { height: 100dvh; }
-}
+.screen { display: none; height: 100%; width: 100%; overflow-x: hidden; flex-direction: column; }
+@supports (height: 100dvh) { .screen { height: 100dvh; } }
 .screen.active { display: flex; }
-.lang-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
+
+/* === 로딩 === */
+.loading-screen { align-items: center; justify-content: center; }
+.loading-spinner { width: 30px; height: 30px; border: 3px solid #E5E5E5; border-top-color: #C9A063; border-radius: 50%; animation: spin 0.8s linear infinite; margin-top: 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === 공통 === */
 .logo { font-size: 2.5rem; font-weight: 300; letter-spacing: 0.3em; margin-bottom: 1rem; }
 .subtitle { color: #666; margin-bottom: 3rem; }
+.gold-btn { padding: 0.8rem 2rem; background: #C9A063; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; width: 100%; }
+.gold-btn:hover { background: #B8914F; }
+.gold-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* === 언어 선택 === */
+.lang-screen { align-items: center; justify-content: center; padding: 2rem; }
 .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; max-width: 400px; width: 100%; }
 .lang-btn {
   padding: 1.5rem;
@@ -43,178 +49,131 @@ body {
 }
 .lang-btn:hover { border-color: #C9A063; transform: translateY(-2px); }
 
-.auth-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-.auth-form {
+/* === 로그인/회원가입 === */
+.auth-screen { align-items: center; justify-content: center; padding: 2rem; }
+.auth-form { width: 100%; max-width: 380px; }
+.auth-form h2 { text-align: center; margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #555; }
+.form-group input, .form-group select { width: 100%; padding: 0.7rem; border: 1px solid #DDD; border-radius: 8px; font-size: 1rem; }
+.auth-btn { width: 100%; padding: 0.8rem; background: #C9A063; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; }
+.auth-btn:hover { background: #B8914F; }
+.auth-btn:disabled { background: #ccc; }
+.auth-error { background: #fee; color: #c33; padding: 0.7rem; border-radius: 8px; display: none; margin-bottom: 1rem; font-size: 0.9rem; }
+.auth-switch { text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #666; }
+.auth-switch a { color: #C9A063; cursor: pointer; text-decoration: underline; }
+.role-toggle { display: flex; border: 2px solid #E5E5E5; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }
+.role-toggle button { flex: 1; padding: 0.6rem; border: none; background: white; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+.role-toggle button.active { background: #C9A063; color: white; }
+.designer-fields { display: none; }
+.designer-fields.show { display: block; }
+
+/* === 채팅 목록 === */
+.chatlist-header {
   background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-}
-.auth-form h2 { font-size: 1.5rem; margin-bottom: 1.5rem; text-align: center; }
-.form-group { margin-bottom: 1.2rem; }
-.form-group label { display: block; font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; }
-.form-group input {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-.auth-btn {
-  width: 100%;
-  padding: 1rem;
-  background: #C9A063;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-top: 1rem;
-}
-.auth-btn:disabled { background: #ccc; cursor: not-allowed; }
-.auth-switch {
-  text-align: center;
-  margin-top: 1.2rem;
-  font-size: 0.9rem;
-  color: #666;
-}
-.auth-switch a {
-  color: #C9A063;
-  cursor: pointer;
-  text-decoration: underline;
-}
-.auth-error {
-  background: #FFF0F0;
-  color: #D00;
-  padding: 0.6rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  display: none;
-}
-.customer-screen { flex-direction: row; }
-.menu-sidebar {
-  width: 180px;
-  min-width: 180px;
-  background: white;
-  border-right: 1px solid #E5E5E5;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  transition: width 0.3s, min-width 0.3s;
-}
-.menu-sidebar.expanded {
-  width: 320px;
-  min-width: 320px;
-}
-.menu-tabs {
-  display: flex;
-  flex-direction: column;
-}
-.menu-tab {
   padding: 1rem 1.2rem;
-  cursor: pointer;
-  font-size: 0.95rem;
-  border-bottom: 1px solid #F0F0F0;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.menu-tab:hover { background: #F9F7F3; }
-.menu-tab.active { background: #F5F3EE; border-left: 3px solid #C9A063; font-weight: 600; }
-.menu-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.2rem;
-  font-size: 0.88rem;
-  line-height: 1.7;
-  background: #FDFCFA;
-}
-.menu-content h4 {
-  color: #C9A063;
-  margin: 1rem 0 0.4rem;
-  font-size: 0.92rem;
-}
-.menu-content h4:first-child { margin-top: 0; }
-.menu-content .price-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.2rem 0;
-}
-.menu-content .price-row span:last-child { color: #C9A063; font-weight: 600; }
-.menu-content .note { font-size: 0.8rem; color: #999; margin-top: 0.5rem; }
-.menu-content .divider { border-top: 1px dashed #E5E5E5; margin: 0.8rem 0; }
-.customer-chat-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-@media (max-width: 600px) {
-  .menu-sidebar {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    width: 85vw;
-    height: 100%;
-    height: 100dvh;
-    z-index: 1000;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
-  }
-  .menu-sidebar.mobile-open {
-    display: flex;
-  }
-  .menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100%;
-    height: 100dvh;
-    background: rgba(0,0,0,0.3);
-    z-index: 999;
-  }
-  .menu-overlay.active { display: block; }
-  .mobile-menu-btn { display: inline-flex !important; }
-  .input-area { padding-bottom: 2.5rem; }
-}
-.chat-header {
-  background: white;
-  padding: 1rem;
   border-bottom: 1px solid #E5E5E5;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.chat-header h3 { font-size: 1.1rem; }
-.lang-badge {
+.chatlist-header h2 { font-size: 1.2rem; }
+.chatlist-header-btns { display: flex; gap: 0.5rem; }
+.chatlist-header-btns button {
   padding: 0.4rem 0.8rem;
-  background: #F5F3EE;
+  border: 1px solid #DDD;
+  background: white;
   border-radius: 20px;
+  cursor: pointer;
   font-size: 0.85rem;
 }
+.chatlist-items { flex: 1; overflow-y: auto; }
+.chatlist-item {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #F0F0F0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: background 0.2s;
+}
+.chatlist-item:hover { background: #F9F5ED; }
+.chatlist-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #C9A063;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.chatlist-avatar.designer { background: #7C6BC4; }
+.chatlist-avatar.admin { background: #C9A063; }
+.chatlist-info { flex: 1; min-width: 0; }
+.chatlist-name { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+.chatlist-preview { color: #888; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.2rem; }
+.chatlist-meta { text-align: right; flex-shrink: 0; }
+.chatlist-time { font-size: 0.75rem; color: #999; }
+.chatlist-unread { background: #C9A063; color: white; font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; margin-top: 0.3rem; display: inline-block; }
+.no-chats { padding: 3rem; text-align: center; color: #999; }
+
+/* === 친구 추가 모달 === */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 360px;
+}
+.modal-box h3 { margin-bottom: 1rem; text-align: center; }
+.modal-box input { width: 100%; padding: 0.7rem; border: 1px solid #DDD; border-radius: 8px; font-size: 1rem; margin-bottom: 0.8rem; }
+.modal-result { margin-top: 0.5rem; padding: 0.8rem; border-radius: 8px; display: none; }
+.modal-result.found { display: block; background: #F9F5ED; }
+.modal-result.not-found { display: block; background: #FEE; color: #c33; text-align: center; }
+.modal-result-user { display: flex; align-items: center; gap: 0.8rem; }
+.modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; position: absolute; right: 1rem; top: 0.5rem; }
+
+/* === 채팅방 === */
+.chatroom-header {
+  background: white;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #E5E5E5;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0.2rem; }
+.chatroom-header-info { flex: 1; }
+.chatroom-header-info h3 { font-size: 1rem; }
+.chatroom-header-info p { font-size: 0.8rem; color: #888; }
+.lang-badge { background: #F0F0F0; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; }
+.logout-btn { background: none; border: 1px solid #DDD; padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
-}
-.message {
-  margin-bottom: 1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  position: relative;
+  gap: 0.5rem;
+  background: #FAF9F6;
 }
-.message.from-me { align-items: flex-end; }
-.message.from-them { align-items: flex-start; }
+.message { display: flex; flex-direction: column; }
+.from-me { align-items: flex-end; }
+.from-them { align-items: flex-start; }
 .msg-bubble {
   max-width: 90%;
   padding: 0.8rem 1rem;
@@ -224,181 +183,13 @@ body {
   letter-spacing: 0.03em;
   line-height: 1.7;
 }
-.message.from-me .msg-bubble { background: #C9A063; color: white; }
-.message.from-them .msg-bubble { background: white; border: 1px solid #E5E5E5; }
-.msg-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
-.msg-delete {
-  display: none;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #FF4444;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  font-size: 12px;
-  cursor: pointer;
-  line-height: 1;
-  z-index: 1;
-}
-.message.from-me .msg-delete { left: -30px; }
-.message.from-them .msg-delete { right: -30px; }
-.message:hover .msg-delete { display: block; }
-.msg-deleted { font-style: italic; opacity: 0.5; }
-.msg-highlight {
-  background: #FFE0E0;
-  color: #C00;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-.input-area {
-  background: white;
-  padding: 1rem;
-  padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 20px)));
-  border-top: 1px solid #E5E5E5;
-  display: flex;
-  gap: 0.8rem;
-}
-.msg-input {
-  flex: 1;
-  padding: 0.8rem;
-  border: 1px solid #E5E5E5;
-  border-radius: 20px;
-  font-size: 1rem;
-  resize: none;
-  font-family: inherit;
-  min-height: 2.5rem;
-  max-height: 7.5rem;
-  overflow-y: hidden;
-  line-height: 1.4;
-}
-.send-btn {
-  padding: 0.8rem 1.5rem;
-  background: #C9A063;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
-.quick-replies {
-  background: white;
-  border-top: 1px solid #E5E5E5;
-  padding: 0.6rem 1rem;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.quick-reply-btn {
-  padding: 0.4rem 0.8rem;
-  background: #F5F3EE;
-  border: 1px solid #E5E5E5;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.quick-reply-btn:hover { background: #C9A063; color: white; border-color: #C9A063; }
-.quick-reply-toggle {
-  padding: 0.4rem 0.7rem;
-  background: #666;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-.staff-screen {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-}
-.customer-list {
-  background: white;
-  border-right: 1px solid #E5E5E5;
-  display: flex;
-  flex-direction: column;
-}
-.list-header { padding: 1rem; border-bottom: 1px solid #E5E5E5; }
-.list-header h2 { font-size: 1.2rem; margin-bottom: 0.8rem; }
-.search-box {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-}
-.customer-items { flex: 1; overflow-y: auto; }
-.customer-item {
-  padding: 1rem;
-  border-bottom: 1px solid #E5E5E5;
-  cursor: pointer;
-}
-.customer-item:hover { background: #F9F9F9; }
-.customer-item.active { background: #F5F3EE; border-left: 3px solid #C9A063; }
-.customer-name {
-  font-weight: 500;
-  margin-bottom: 0.3rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.unread { 
-  background: #FF4444; 
-  color: white; 
-  padding: 0.2rem 0.5rem; 
-  border-radius: 10px; 
-  font-size: 0.7rem; 
-}
-.customer-preview { 
-  font-size: 0.85rem; 
-  color: #666; 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis;
-  max-width: 280px;
-}
-.customer-time { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
-.loading-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #E5E5E5;
-  border-top-color: #C9A063;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 1rem;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.logout-btn {
-  padding: 0.4rem 0.8rem;
-  background: none;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-  color: #999;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.logout-btn:hover { background: #F5F3EE; }
-.mobile-menu-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.6rem;
-  background: #F5F3EE;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  gap: 0.2rem;
-}
+.from-me .msg-bubble { background: #C9A063; color: white; border-bottom-right-radius: 4px; }
+.from-them .msg-bubble { background: white; border: 1px solid #E5E5E5; border-bottom-left-radius: 4px; }
+.msg-time { font-size: 0.7rem; color: #999; margin-top: 0.2rem; }
+.msg-delete { position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; cursor: pointer; display: none; line-height: 20px; text-align: center; }
+.msg-bubble:hover .msg-delete { display: block; }
+.msg-highlight { background: #ff6b6b; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+.msg-img { max-width: 240px; border-radius: 8px; margin: 4px 0; display: block; cursor: pointer; }
 .msg-link { color: inherit; text-decoration: underline; word-break: break-all; }
 .msg-link-btn {
   display: inline-block;
@@ -410,8 +201,161 @@ body {
   margin: 4px 0;
   font-size: 0.85rem;
 }
-.msg-link-btn:hover { background: #B8914F; }
-.msg-img { max-width: 200px; border-radius: 8px; margin: 8px 0; display: block; }
+
+/* === 입력 영역 === */
+.input-area {
+  background: white;
+  padding: 0.8rem;
+  padding-bottom: max(1rem, calc(0.8rem + env(safe-area-inset-bottom, 10px)));
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+.msg-input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #DDD;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  resize: none;
+  overflow-y: hidden;
+  max-height: 120px;
+  font-family: inherit;
+}
+.img-upload-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid #DDD;
+  background: white;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.send-btn {
+  padding: 0.5rem 1rem;
+  background: #C9A063;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.img-preview { position: relative; margin-bottom: 0.5rem; }
+.img-preview img { max-height: 100px; border-radius: 8px; }
+.img-preview-remove { position: absolute; top: -6px; right: -6px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.8rem; }
+
+/* === 메뉴 사이드바 === */
+.menu-sidebar {
+  width: 180px;
+  min-width: 180px;
+  background: white;
+  border-right: 1px solid #E5E5E5;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: width 0.3s, min-width 0.3s;
+}
+.menu-sidebar.expanded { width: 320px; min-width: 320px; }
+.menu-tabs { display: flex; flex-direction: column; }
+.menu-tab {
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #F0F0F0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.menu-tab:hover, .menu-tab.active { background: #F9F5ED; color: #C9A063; }
+.menu-content { padding: 0.8rem; font-size: 0.85rem; overflow-y: auto; flex: 1; }
+.menu-content h4 { margin: 0.8rem 0 0.3rem; color: #C9A063; font-size: 0.9rem; }
+.price-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid #F8F8F8; font-size: 0.85rem; }
+.divider { height: 1px; background: #E5E5E5; margin: 0.8rem 0; }
+.menu-content .note { font-size: 0.8rem; color: #888; margin: 0.3rem 0; }
+.menu-content .link { color: #C9A063; text-decoration: underline; cursor: pointer; }
+
+/* === 메뉴 오버레이 (모바일) === */
+.menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100%;
+  background: rgba(0,0,0,0.3);
+  z-index: 999;
+}
+.menu-overlay.active { display: block; }
+
+/* === 스태프 화면 === */
+.staff-screen { display: none; flex-direction: row; height: 100%; }
+.customer-list {
+  width: 300px;
+  border-right: 1px solid #E5E5E5;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+.list-header { padding: 1rem; border-bottom: 1px solid #E5E5E5; }
+.list-header h2 { margin-bottom: 0.5rem; }
+.search-box { width: 100%; padding: 0.5rem; border: 1px solid #DDD; border-radius: 6px; }
+.customer-items { overflow-y: auto; flex: 1; }
+.customer-item {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #F0F0F0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.customer-item:hover, .customer-item.active { background: #F9F5ED; }
+.customer-name { font-weight: bold; font-size: 0.95rem; }
+.customer-preview { color: #888; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.customer-time { font-size: 0.75rem; color: #999; }
+.unread { background: #C9A063; color: white; font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; margin-left: 0.5rem; }
+.quick-replies { padding: 0.5rem; background: #F9F9F9; border-top: 1px solid #E5E5E5; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.quick-reply-toggle { background: none; border: 1px solid #C9A063; color: #C9A063; padding: 0.3rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
+.quick-reply-btn { background: #FFF; border: 1px solid #DDD; padding: 0.3rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.8rem; display: none; }
+
+/* === 이미지 업로드 진행 === */
+.upload-progress {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  z-index: 3000;
+  display: none;
+  text-align: center;
+}
+.upload-progress.active { display: block; }
+
+/* === 모바일 === */
+.mobile-menu-btn { display: none !important; padding: 0.3rem 0.7rem; border: 1px solid #DDD; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; align-items: center; gap: 0.3rem; }
+
+@media (max-width: 600px) {
+  .mobile-menu-btn { display: inline-flex !important; }
+  .input-area { padding-bottom: 2.5rem; }
+  .staff-screen { grid-template-columns: 1fr; }
+  .customer-list { display: none; }
+  .menu-sidebar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 85vw;
+    height: 100%;
+    height: 100dvh;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  .menu-sidebar.mobile-open { display: flex; }
+  .menu-overlay { height: 100dvh; }
+}
 @media (max-width: 768px) {
   .staff-screen { grid-template-columns: 1fr; }
   .customer-list { display: none; }
@@ -420,7 +364,7 @@ body {
 </head>
 <body>
 
-<!-- 로딩 화면 -->
+<!-- 로딩 -->
 <div class="screen active loading-screen" id="loadingScreen">
   <div class="logo">MALLANG</div>
   <div class="loading-spinner"></div>
@@ -438,25 +382,24 @@ body {
     <button class="lang-btn" onclick="selectLang('th')">🇹🇭 ภาษาไทย</button>
     <button class="lang-btn" onclick="selectLang('vi')">🇻🇳 Tiếng Việt</button>
   </div>
-
 </div>
 
 <!-- 로그인 -->
 <div class="screen auth-screen" id="loginScreen">
   <div class="logo" style="margin-bottom: 2rem;">MALLANG</div>
   <div class="auth-form">
-    <h2 id="loginTitle">로그인</h2>
+    <h2>로그인 / Login</h2>
     <div class="auth-error" id="loginError"></div>
     <div class="form-group">
-      <label id="loginEmailLabel">이메일 / Email</label>
+      <label>이메일 / Email</label>
       <input type="email" id="loginEmail" placeholder="email@example.com">
     </div>
     <div class="form-group">
-      <label id="loginPwLabel">비밀번호 / Password</label>
+      <label>비밀번호 / Password</label>
       <input type="password" id="loginPw" placeholder="••••••">
     </div>
-    <button class="auth-btn" id="loginBtn" onclick="doLogin()">로그인 / Login</button>
-    <div class="auth-switch" id="loginSwitch">
+    <button class="auth-btn" onclick="doLogin()">로그인 / Login</button>
+    <div class="auth-switch">
       계정이 없으신가요? <a onclick="showScreen('signupScreen')">회원가입 / Sign Up</a>
     </div>
   </div>
@@ -466,30 +409,78 @@ body {
 <div class="screen auth-screen" id="signupScreen">
   <div class="logo" style="margin-bottom: 2rem;">MALLANG</div>
   <div class="auth-form">
-    <h2 id="signupTitle">회원가입</h2>
+    <h2>회원가입 / Sign Up</h2>
     <div class="auth-error" id="signupError"></div>
-    <div class="form-group">
-      <label id="signupNameLabel">이름 / Name *</label>
-      <input type="text" id="signupName" placeholder="Hong Gildong">
+    <div class="role-toggle" id="roleToggle">
+      <button class="active" onclick="setRole('customer')">👤 고객 / Customer</button>
+      <button onclick="setRole('designer')">✂️ 디자이너 / Designer</button>
     </div>
     <div class="form-group">
-      <label id="signupEmailLabel">이메일 / Email *</label>
+      <label>이름 / Name *</label>
+      <input type="text" id="signupName" placeholder="Hong Gildong">
+    </div>
+    <div class="designer-fields" id="designerFields">
+      <div class="form-group">
+        <label>프로필 ID * (영문, 친구 추가에 사용)</label>
+        <input type="text" id="signupProfileId" placeholder="Jina" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>이메일 / Email *</label>
       <input type="email" id="signupEmail" placeholder="email@example.com">
     </div>
     <div class="form-group">
-      <label id="signupPwLabel">비밀번호 / Password *</label>
+      <label>비밀번호 / Password *</label>
       <input type="password" id="signupPw" placeholder="6자 이상 / 6+ characters">
     </div>
-    <button class="auth-btn" id="signupBtn" onclick="doSignup()">회원가입 / Sign Up</button>
-    <div class="auth-switch" id="signupSwitch">
+    <button class="auth-btn" onclick="doSignup()">회원가입 / Sign Up</button>
+    <div class="auth-switch">
       이미 계정이 있으신가요? <a onclick="showScreen('loginScreen')">로그인 / Login</a>
     </div>
   </div>
 </div>
 
-<!-- 고객 채팅 -->
-<div class="screen customer-screen" id="customerScreen">
-  <div class="menu-sidebar" onclick="expandSidebar()">
+<!-- 채팅 목록 -->
+<div class="screen" id="chatListScreen">
+  <div class="chatlist-header">
+    <h2 id="chatListTitle">채팅</h2>
+    <div class="chatlist-header-btns">
+      <button onclick="showPriceMenu()" id="priceMenuBtn" style="display:none;">☰ Price</button>
+      <button onclick="showFriendModal()">+ 친구추가</button>
+      <button onclick="doLogout()" style="font-size:0.8rem;">로그아웃</button>
+    </div>
+  </div>
+  <div class="chatlist-items" id="chatListItems">
+    <div class="no-chats">채팅이 없습니다</div>
+  </div>
+</div>
+
+<!-- 친구 추가 모달 -->
+<div class="modal-overlay" id="friendModal">
+  <div class="modal-box" style="position:relative;">
+    <button class="modal-close" onclick="closeFriendModal()">×</button>
+    <h3>🔍 친구 추가 / Add Friend</h3>
+    <p style="font-size:0.85rem; color:#888; margin-bottom:1rem; text-align:center;" id="friendSearchHint">디자이너 ID를 입력하세요</p>
+    <input type="text" id="friendSearchInput" placeholder="ID 입력 (예: Jina)" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '')">
+    <button class="gold-btn" onclick="searchFriend()">검색 / Search</button>
+    <div class="modal-result" id="friendResult"></div>
+  </div>
+</div>
+
+<!-- 채팅방 -->
+<div class="screen" id="chatRoomScreen">
+  <div class="chatroom-header">
+    <button class="back-btn" onclick="backToChatList()">←</button>
+    <div class="chatroom-header-info">
+      <h3 id="roomPartnerName">-</h3>
+      <p id="roomPartnerInfo"></p>
+    </div>
+    <button class="mobile-menu-btn" id="roomPriceBtn" onclick="toggleMobileMenu()" style="display:none;">☰ Price</button>
+    <div class="lang-badge" id="roomPartnerLang"></div>
+  </div>
+  <!-- 메뉴 사이드바 (오버레이) -->
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
+  <div class="menu-sidebar" id="menuSidebar">
     <div class="menu-tabs">
       <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
       <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
@@ -499,28 +490,18 @@ body {
     </div>
     <div class="menu-content" id="menuContent"></div>
   </div>
-  <div class="customer-chat-area" onclick="collapseSidebar()">
-    <div class="chat-header">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <button class="mobile-menu-btn" onclick="event.stopPropagation(); toggleMobileMenu()">☰ Price</button>
-        <div>
-          <h3>MALLANG</h3>
-          <p style="font-size: 0.85rem; color: #666;" id="customerSubtitle">상담원이 곧 응답합니다</p>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <div class="lang-badge" id="userLang"></div>
-        <button class="logout-btn" onclick="doLogout()">로그아웃</button>
-      </div>
-    </div>
-    <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
-    <div class="messages" id="customerMsg"></div>
-    <div class="input-area">
-      <textarea class="msg-input" id="customerInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
-      <button class="send-btn" onclick="sendCustomerMsg()">전송</button>
-    </div>
+  <div class="messages" id="chatMessages"></div>
+  <div id="imgPreviewArea"></div>
+  <div class="input-area">
+    <button class="img-upload-btn" onclick="document.getElementById('imageInput').click()">📷</button>
+    <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="previewImage(event)">
+    <textarea class="msg-input" id="chatInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
+    <button class="send-btn" onclick="sendChatMsg()">전송</button>
   </div>
 </div>
+
+<!-- 이미지 업로드 진행 -->
+<div class="upload-progress" id="uploadProgress">📤 이미지 업로드 중...</div>
 
 <!-- 스태프 화면 -->
 <div class="screen staff-screen" id="staffScreen">
@@ -531,11 +512,11 @@ body {
     </div>
     <div class="customer-items" id="customerList"></div>
   </div>
-  <div style="display: flex; flex-direction: column;">
-    <div class="chat-header">
+  <div style="display: flex; flex-direction: column; flex: 1;">
+    <div class="chat-header" style="background:white;padding:1rem;border-bottom:1px solid #E5E5E5;display:flex;justify-content:space-between;align-items:center;">
       <div>
         <h3 id="selectedName">고객을 선택하세요</h3>
-        <p style="font-size: 0.85rem; color: #666;" id="selectedInfo"></p>
+        <p style="font-size:0.85rem;color:#666;" id="selectedInfo"></p>
       </div>
       <div class="lang-badge" id="selectedLang"></div>
     </div>
@@ -556,6 +537,9 @@ body {
 </div>
 
 <script>
+// ========================================
+// Firebase 초기화
+// ========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCeouM3_9JCWaKTGEeQFrD3ZikAgpheJQ8",
   authDomain: "mallang-chat.firebaseapp.com",
@@ -565,18 +549,41 @@ const firebaseConfig = {
   messagingSenderId: "224793274849",
   appId: "1:224793274849:web:d97f17bf3c410f0ed88aa0"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
+const storage = firebase.storage();
 
+// ========================================
+// 전역 변수
+// ========================================
 let currentLang = 'ko';
-let currentRoomId = null;
-let selectedRoomId = null;
-let isSending = false;
 let currentUser = null;
+let currentUserData = null; // { name, role, profileId, lang, ... }
+let currentChatId = null;
+let currentChatType = null; // 'admin' or 'direct'
+let currentChatPartner = null;
+let selectedRoomId = null; // staff panel
+let isSending = false;
+let pendingImage = null; // 업로드할 이미지 파일
+let signupRole = 'customer';
 
-const WECHAT_QR = 'data:image/jpeg;base64,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';
+// ========================================
+// 번역 텍스트
+// ========================================
+const T = {
+  ko: { placeholder: '메시지를 입력하세요...', subtitle: '상담원이 곧 응답합니다' },
+  en: { placeholder: 'Type your message...', subtitle: 'Our team will reply shortly' },
+  zh: { placeholder: '请输入消息...', subtitle: '我们的团队会尽快回复' },
+  ja: { placeholder: 'メッセージを入力...', subtitle: 'スタッフがすぐに対応します' },
+  th: { placeholder: 'พิมพ์ข้อความ...', subtitle: 'ทีมงานจะตอบกลับในเร็วๆ นี้' },
+  vi: { placeholder: 'Nhập tin nhắn...', subtitle: 'Nhân viên sẽ phản hồi sớm' }
+};
+
+// ========================================
+// 예약 확인 메시지 템플릿
+// ========================================
+const WECHAT_QR = 'data:image/jpeg;base64,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';
 
 const quickConfirmed = `[CENTER]━━━━━━━━━━━━━━━━[/CENTER]
 
@@ -595,16 +602,46 @@ const quickConfirmed = `[CENTER]━━━━━━━━━━━━━━━━
 
 예약 해주셔서 감사합니다 🙏`;
 
-const T = {
-  ko: { placeholder: '메시지를 입력하세요...', subtitle: '상담원이 곧 응답합니다' },
-  en: { placeholder: 'Type your message...', subtitle: 'Our team will reply shortly' },
-  zh: { placeholder: '请输入消息...', subtitle: '我们的团队会尽快回复' },
-  ja: { placeholder: 'メッセージを入力...', subtitle: 'スタッフがすぐに対応します' },
-  th: { placeholder: 'พิมพ์ข้อความ...', subtitle: 'ทีมงานจะตอบกลับในเร็วๆ นี้' },
-  vi: { placeholder: 'Nhập tin nhắn...', subtitle: 'Nhân viên sẽ phản hồi sớm' }
-};
+// ========================================
+// 화면 전환
+// ========================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-// === Auth 상태 감지 ===
+// ========================================
+// 역할 선택 (회원가입)
+// ========================================
+function setRole(role) {
+  signupRole = role;
+  document.querySelectorAll('#roleToggle button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const df = document.getElementById('designerFields');
+  if (role === 'designer') {
+    df.classList.add('show');
+    document.getElementById('friendSearchHint').textContent = '고객 ID를 입력하세요';
+  } else {
+    df.classList.remove('show');
+    document.getElementById('friendSearchHint').textContent = '디자이너 ID를 입력하세요';
+  }
+}
+
+// ========================================
+// 언어 선택 (고객용)
+// ========================================
+function selectLang(lang) {
+  currentLang = lang;
+  if (currentUser) {
+    initAdminRoom();
+  } else {
+    showScreen('loginScreen');
+  }
+}
+
+// ========================================
+// Auth 상태 감지
+// ========================================
 const isStaffMode = new URLSearchParams(window.location.search).has('staff');
 
 auth.onAuthStateChanged(async (user) => {
@@ -613,47 +650,605 @@ auth.onAuthStateChanged(async (user) => {
     return;
   }
   if (user) {
-    // 로그인 상태 — 기존 채팅방 찾기
     currentUser = user;
     const snap = await db.ref('users/' + user.uid).once('value');
-    const userData = snap.val();
+    currentUserData = snap.val();
     
-    if (userData && userData.roomId) {
-      // 기존 채팅방 있음 → 바로 채팅으로
-      currentRoomId = userData.roomId;
-      currentLang = userData.lang || 'en';
-      document.getElementById('userLang').textContent = getFlag(currentLang) + ' ' + currentLang.toUpperCase();
-      document.getElementById('customerInput').placeholder = T[currentLang]?.placeholder || T.en.placeholder;
-      document.getElementById('customerSubtitle').textContent = T[currentLang]?.subtitle || T.en.subtitle;
-      showScreen('customerScreen');
-      listenToMessages('customerMsg', currentRoomId, false);
+    if (currentUserData) {
+      currentLang = currentUserData.lang || 'en';
+      
+      // 고객이면 관리자 채팅방 확인/생성
+      if (currentUserData.role !== 'designer') {
+        if (!currentUserData.adminRoomId) {
+          await initAdminRoom();
+        }
+      }
+      
+      // 채팅 목록으로
+      loadChatList();
+      showScreen('chatListScreen');
+      
+      // 고객이면 Price 버튼 표시
+      if (currentUserData.role !== 'designer') {
+        document.getElementById('priceMenuBtn').style.display = 'inline-block';
+      }
     } else {
-      // 로그인됐지만 채팅방 없음 → 언어 선택으로
       showScreen('langScreen');
     }
   } else {
-    // 비로그인 → 언어 선택
     currentUser = null;
+    currentUserData = null;
     showScreen('langScreen');
   }
 });
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function selectLang(lang) {
-  currentLang = lang;
-  if (currentUser) {
-    // 이미 로그인됨 → 채팅방 생성
-    createRoom();
-  } else {
-    // 로그인 필요
-    showScreen('loginScreen');
+// ========================================
+// 회원가입
+// ========================================
+async function doSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPw').value;
+  const profileId = document.getElementById('signupProfileId').value.trim();
+  const errEl = document.getElementById('signupError');
+  
+  errEl.style.display = 'none';
+  
+  if (!name || !email || !pw) {
+    errEl.textContent = '모든 항목을 입력해주세요 / Please fill in all fields';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  if (signupRole === 'designer' && !profileId) {
+    errEl.textContent = '프로필 ID를 입력해주세요';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  // 디자이너 프로필 ID 중복 확인
+  if (signupRole === 'designer') {
+    const idCheck = await db.ref('profileIds/' + profileId.toLowerCase()).once('value');
+    if (idCheck.exists()) {
+      errEl.textContent = '이미 사용중인 ID입니다 / ID already taken';
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+  
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.updateProfile({ displayName: name });
+    
+    const userData = {
+      name: name,
+      email: email,
+      role: signupRole,
+      lang: signupRole === 'designer' ? 'ko' : currentLang,
+      createdAt: Date.now()
+    };
+    
+    if (signupRole === 'designer') {
+      userData.profileId = profileId;
+      // 프로필 ID 인덱스 저장
+      await db.ref('profileIds/' + profileId.toLowerCase()).set(cred.user.uid);
+    } else {
+      // 고객은 이름을 profileId로 사용 (uid 앞 6자리)
+      userData.profileId = cred.user.uid.substring(0, 8);
+    }
+    
+    await db.ref('users/' + cred.user.uid).set(userData);
+    
+    // 고객이면 관리자 채팅방 생성
+    if (signupRole !== 'designer') {
+      currentUserData = userData;
+      await initAdminRoom();
+    }
+    
+  } catch (error) {
+    errEl.textContent = getAuthErrorMsg(error.code);
+    errEl.style.display = 'block';
   }
 }
 
+// ========================================
+// 로그인
+// ========================================
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  const errEl = document.getElementById('loginError');
+  
+  errEl.style.display = 'none';
+  if (!email || !pw) {
+    errEl.textContent = '이메일과 비밀번호를 입력해주세요';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+  } catch (error) {
+    errEl.textContent = getAuthErrorMsg(error.code);
+    errEl.style.display = 'block';
+  }
+}
+
+// ========================================
+// 로그아웃
+// ========================================
+async function doLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  currentUser = null;
+  currentUserData = null;
+  currentChatId = null;
+  await auth.signOut();
+  showScreen('langScreen');
+}
+
+// ========================================
+// 관리자 채팅방 생성 (고객용, 기존 호환)
+// ========================================
+async function initAdminRoom() {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  const roomId = 'room_' + uid;
+  
+  const snap = await db.ref('rooms/' + roomId).once('value');
+  if (!snap.exists()) {
+    await db.ref('rooms/' + roomId).set({
+      userName: currentUser.displayName || 'Guest',
+      userEmail: currentUser.email || '',
+      userLang: currentLang,
+      userId: uid,
+      lastMessage: '',
+      lastMessageTime: Date.now(),
+      unreadCount: 0
+    });
+  }
+  
+  await db.ref('users/' + uid).update({ adminRoomId: roomId, lang: currentLang });
+  if (currentUserData) currentUserData.adminRoomId = roomId;
+}
+
+// ========================================
+// 채팅 목록
+// ========================================
+function loadChatList() {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  const container = document.getElementById('chatListItems');
+  
+  // 타이틀 업데이트
+  document.getElementById('chatListTitle').textContent = 
+    currentUserData?.role === 'designer' ? '💬 채팅' : '💬 채팅';
+  
+  // 1:1 채팅 목록 리스닝
+  db.ref('userChats/' + uid).on('value', async (snap) => {
+    const chats = snap.val() || {};
+    let items = [];
+    
+    // 고객이면 관리자 채팅 추가 (맨 위)
+    if (currentUserData?.role !== 'designer' && currentUserData?.adminRoomId) {
+      const adminSnap = await db.ref('rooms/' + currentUserData.adminRoomId).once('value');
+      const adminRoom = adminSnap.val();
+      if (adminRoom) {
+        items.push({
+          id: currentUserData.adminRoomId,
+          type: 'admin',
+          name: 'MALLANG',
+          avatar: 'M',
+          avatarClass: 'admin',
+          preview: adminRoom.lastMessage || '새로운 대화',
+          time: adminRoom.lastMessageTime || 0,
+          unread: 0
+        });
+      }
+    }
+    
+    // 1:1 채팅들
+    const chatEntries = Object.entries(chats);
+    for (const [chatId, chatInfo] of chatEntries) {
+      const partnerUid = chatInfo.partnerUid;
+      const partnerSnap = await db.ref('users/' + partnerUid).once('value');
+      const partner = partnerSnap.val();
+      if (!partner) continue;
+      
+      const chatSnap = await db.ref('chats/' + chatId).once('value');
+      const chatData = chatSnap.val();
+      
+      items.push({
+        id: chatId,
+        type: 'direct',
+        name: partner.name || 'Unknown',
+        partnerUid: partnerUid,
+        avatar: (partner.name || '?')[0].toUpperCase(),
+        avatarClass: partner.role === 'designer' ? 'designer' : '',
+        preview: chatData?.lastMessage || '새로운 대화',
+        time: chatData?.lastMessageTime || 0,
+        unread: chatData?.['unread_' + uid] || 0,
+        lang: partner.lang
+      });
+    }
+    
+    // 시간순 정렬 (관리자 제외)
+    const adminItem = items.find(i => i.type === 'admin');
+    const directItems = items.filter(i => i.type !== 'admin')
+      .sort((a, b) => b.time - a.time);
+    items = adminItem ? [adminItem, ...directItems] : directItems;
+    
+    if (items.length === 0) {
+      container.innerHTML = '<div class="no-chats">채팅이 없습니다<br><br>+ 친구추가 버튼으로<br>친구를 추가해보세요!</div>';
+      return;
+    }
+    
+    container.innerHTML = items.map(item => `
+      <div class="chatlist-item" onclick="openChat('${item.id}', '${item.type}', '${item.partnerUid || ''}')">
+        <div class="chatlist-avatar ${item.avatarClass}">${item.avatar}</div>
+        <div class="chatlist-info">
+          <div class="chatlist-name">
+            ${escapeHtml(item.name)}
+            ${item.lang ? '<span style="font-size:0.75rem;color:#999;">' + getFlag(item.lang) + '</span>' : ''}
+          </div>
+          <div class="chatlist-preview">${previewText(item.preview)}</div>
+        </div>
+        <div class="chatlist-meta">
+          <div class="chatlist-time">${formatTime(item.time)}</div>
+          ${item.unread > 0 ? '<div class="chatlist-unread">' + item.unread + '</div>' : ''}
+        </div>
+      </div>
+    `).join('');
+  });
+  
+  // 관리자 채팅방 변경 감지 (실시간 업데이트)
+  if (currentUserData?.adminRoomId) {
+    db.ref('rooms/' + currentUserData.adminRoomId).on('value', () => {
+      // chatlist가 업데이트되도록 userChats 트리거
+      db.ref('userChats/' + uid).once('value'); // 리프레시 트리거
+    });
+  }
+}
+
+// ========================================
+// 채팅방 열기
+// ========================================
+function openChat(chatId, type, partnerUid) {
+  currentChatId = chatId;
+  currentChatType = type;
+  currentChatPartner = partnerUid;
+  
+  // 메시지 컨테이너 초기화
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('imgPreviewArea').innerHTML = '';
+  pendingImage = null;
+  
+  if (type === 'admin') {
+    // 관리자 채팅
+    document.getElementById('roomPartnerName').textContent = 'MALLANG';
+    document.getElementById('roomPartnerInfo').textContent = T[currentLang]?.subtitle || T.en.subtitle;
+    document.getElementById('roomPartnerLang').textContent = '';
+    document.getElementById('roomPriceBtn').style.display = 'inline-flex';
+    document.getElementById('chatInput').placeholder = T[currentLang]?.placeholder || T.en.placeholder;
+    
+    listenAdminMessages();
+  } else {
+    // 1:1 채팅
+    document.getElementById('roomPriceBtn').style.display = 'none';
+    document.getElementById('chatInput').placeholder = '메시지를 입력하세요...';
+    
+    db.ref('users/' + partnerUid).once('value', snap => {
+      const partner = snap.val();
+      if (partner) {
+        document.getElementById('roomPartnerName').textContent = partner.name;
+        document.getElementById('roomPartnerInfo').textContent = partner.role === 'designer' ? '✂️ Designer' : '👤 Customer';
+        document.getElementById('roomPartnerLang').textContent = getFlag(partner.lang) + ' ' + (partner.lang || '').toUpperCase();
+      }
+    });
+    
+    // 읽음 처리
+    if (currentUser) {
+      db.ref('chats/' + chatId + '/unread_' + currentUser.uid).set(0);
+    }
+    
+    listenDirectMessages();
+  }
+  
+  showScreen('chatRoomScreen');
+}
+
+function backToChatList() {
+  // 리스너 해제
+  if (currentChatId) {
+    if (currentChatType === 'admin') {
+      db.ref('rooms/' + currentChatId + '/messages').off();
+    } else {
+      db.ref('chats/' + currentChatId + '/messages').off();
+    }
+  }
+  currentChatId = null;
+  currentChatType = null;
+  showScreen('chatListScreen');
+}
+
+// ========================================
+// 관리자 채팅 메시지 (기존 rooms 구조)
+// ========================================
+function listenAdminMessages() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  
+  db.ref('rooms/' + currentChatId + '/messages').off();
+  db.ref('rooms/' + currentChatId + '/messages').on('child_added', snap => {
+    const msg = snap.val();
+    if (!msg || msg.deleted) return;
+    appendMessage(container, msg.text, msg.imageUrl, !msg.isStaff, msg.timestamp, snap.key);
+  });
+}
+
+// ========================================
+// 1:1 채팅 메시지
+// ========================================
+function listenDirectMessages() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  
+  db.ref('chats/' + currentChatId + '/messages').off();
+  db.ref('chats/' + currentChatId + '/messages').on('child_added', snap => {
+    const msg = snap.val();
+    if (!msg || msg.deleted) return;
+    const isMine = msg.sender === currentUser.uid;
+    appendMessage(container, msg.text, msg.imageUrl, isMine, msg.timestamp, snap.key);
+  });
+}
+
+// ========================================
+// 메시지 UI 추가
+// ========================================
+function appendMessage(container, text, imageUrl, isMine, timestamp, msgKey) {
+  const div = document.createElement('div');
+  div.className = 'message ' + (isMine ? 'from-me' : 'from-them');
+  div.id = 'msg-' + msgKey;
+  
+  let content = '';
+  if (imageUrl) {
+    content += `<img src="${imageUrl}" class="msg-img" onclick="window.open('${imageUrl}','_blank')">`;
+  }
+  if (text) {
+    content += renderMessage(text);
+  }
+  
+  div.innerHTML = `
+    <div class="msg-bubble">${content}</div>
+    <div class="msg-time">${formatTime(timestamp)}</div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ========================================
+// 메시지 전송
+// ========================================
+async function sendChatMsg() {
+  if (isSending) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  
+  if (!text && !pendingImage) return;
+  if (!currentChatId) return;
+  
+  isSending = true;
+  input.value = '';
+  input.style.height = 'auto';
+  
+  let imageUrl = null;
+  
+  // 이미지 업로드
+  if (pendingImage) {
+    document.getElementById('uploadProgress').classList.add('active');
+    try {
+      const fileName = Date.now() + '_' + pendingImage.name;
+      const ref = storage.ref('chat-images/' + currentChatId + '/' + fileName);
+      const snapshot = await ref.put(pendingImage);
+      imageUrl = await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      alert('이미지 업로드 실패: ' + e.message);
+      isSending = false;
+      document.getElementById('uploadProgress').classList.remove('active');
+      return;
+    }
+    document.getElementById('uploadProgress').classList.remove('active');
+    pendingImage = null;
+    document.getElementById('imgPreviewArea').innerHTML = '';
+  }
+  
+  try {
+    if (currentChatType === 'admin') {
+      // 관리자 채팅 (기존 구조)
+      await db.ref('rooms/' + currentChatId + '/messages').push({
+        text: text || '', imageUrl: imageUrl || null, isStaff: false, timestamp: Date.now()
+      });
+      await db.ref('rooms/' + currentChatId).update({
+        lastMessage: imageUrl ? '📷 사진' : text,
+        lastMessageTime: Date.now(),
+        unreadCount: firebase.database.ServerValue.increment(1)
+      });
+    } else {
+      // 1:1 채팅
+      await db.ref('chats/' + currentChatId + '/messages').push({
+        sender: currentUser.uid,
+        text: text || '',
+        imageUrl: imageUrl || null,
+        timestamp: Date.now()
+      });
+      const lastMsg = imageUrl ? '📷 사진' : text;
+      const updates = {
+        lastMessage: lastMsg,
+        lastMessageTime: Date.now()
+      };
+      updates['unread_' + currentChatPartner] = firebase.database.ServerValue.increment(1);
+      await db.ref('chats/' + currentChatId).update(updates);
+    }
+  } catch (error) {
+    alert('전송 실패: ' + error.message);
+  } finally { isSending = false; }
+}
+
+// ========================================
+// 이미지 미리보기
+// ========================================
+function previewImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // 10MB 제한
+  if (file.size > 10 * 1024 * 1024) {
+    alert('10MB 이하의 이미지만 업로드 가능합니다');
+    return;
+  }
+  
+  pendingImage = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('imgPreviewArea').innerHTML = `
+      <div class="img-preview" style="padding: 0.5rem 1rem;">
+        <img src="${e.target.result}">
+        <button class="img-preview-remove" onclick="cancelImage()">✕</button>
+      </div>
+    `;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function cancelImage() {
+  pendingImage = null;
+  document.getElementById('imgPreviewArea').innerHTML = '';
+}
+
+// ========================================
+// 친구 추가
+// ========================================
+function showFriendModal() {
+  document.getElementById('friendModal').classList.add('active');
+  document.getElementById('friendSearchInput').value = '';
+  document.getElementById('friendResult').className = 'modal-result';
+  document.getElementById('friendResult').innerHTML = '';
+  
+  // 힌트 텍스트 업데이트
+  if (currentUserData?.role === 'designer') {
+    document.getElementById('friendSearchHint').textContent = '고객 이메일을 입력하세요';
+    document.getElementById('friendSearchInput').placeholder = 'email@example.com';
+  } else {
+    document.getElementById('friendSearchHint').textContent = '디자이너 ID를 입력하세요';
+    document.getElementById('friendSearchInput').placeholder = 'ID 입력 (예: Jina)';
+  }
+}
+
+function closeFriendModal() {
+  document.getElementById('friendModal').classList.remove('active');
+}
+
+async function searchFriend() {
+  const query = document.getElementById('friendSearchInput').value.trim();
+  const resultEl = document.getElementById('friendResult');
+  
+  if (!query) return;
+  
+  let foundUid = null;
+  let foundUser = null;
+  
+  if (currentUserData?.role === 'designer') {
+    // 디자이너는 고객 이메일로 검색
+    const snap = await db.ref('users').orderByChild('email').equalTo(query).once('value');
+    const users = snap.val();
+    if (users) {
+      const entries = Object.entries(users);
+      for (const [uid, user] of entries) {
+        if (user.role !== 'designer') {
+          foundUid = uid;
+          foundUser = user;
+          break;
+        }
+      }
+    }
+  } else {
+    // 고객은 디자이너 profileId로 검색
+    const uidSnap = await db.ref('profileIds/' + query.toLowerCase()).once('value');
+    if (uidSnap.exists()) {
+      foundUid = uidSnap.val();
+      const userSnap = await db.ref('users/' + foundUid).once('value');
+      foundUser = userSnap.val();
+      if (foundUser && foundUser.role !== 'designer') {
+        foundUser = null; // 디자이너만
+      }
+    }
+  }
+  
+  if (foundUser && foundUid !== currentUser.uid) {
+    // 이미 친구인지 확인
+    const friendCheck = await db.ref('friends/' + currentUser.uid + '/' + foundUid).once('value');
+    const alreadyFriend = friendCheck.exists();
+    
+    resultEl.className = 'modal-result found';
+    resultEl.innerHTML = `
+      <div class="modal-result-user">
+        <div class="chatlist-avatar ${foundUser.role === 'designer' ? 'designer' : ''}" style="width:40px;height:40px;font-size:1rem;">
+          ${(foundUser.name || '?')[0].toUpperCase()}
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;">${escapeHtml(foundUser.name)}</div>
+          <div style="font-size:0.8rem;color:#888;">${foundUser.role === 'designer' ? '✂️ Designer' : '👤 Customer'} ${foundUser.profileId ? '· ' + foundUser.profileId : ''}</div>
+        </div>
+        ${alreadyFriend ? 
+          '<span style="color:#888;font-size:0.85rem;">이미 친구</span>' : 
+          `<button class="gold-btn" style="width:auto;padding:0.4rem 1rem;" onclick="addFriend('${foundUid}')">추가</button>`
+        }
+      </div>
+    `;
+  } else {
+    resultEl.className = 'modal-result not-found';
+    resultEl.innerHTML = '검색 결과가 없습니다';
+  }
+}
+
+async function addFriend(friendUid) {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  
+  try {
+    // 양방향 친구 등록
+    await db.ref('friends/' + uid + '/' + friendUid).set({ since: Date.now() });
+    await db.ref('friends/' + friendUid + '/' + uid).set({ since: Date.now() });
+    
+    // 채팅방 생성
+    const chatId = [uid, friendUid].sort().join('_');
+    
+    const chatSnap = await db.ref('chats/' + chatId).once('value');
+    if (!chatSnap.exists()) {
+      await db.ref('chats/' + chatId).set({
+        participants: { [uid]: true, [friendUid]: true },
+        lastMessage: '',
+        lastMessageTime: Date.now(),
+        ['unread_' + uid]: 0,
+        ['unread_' + friendUid]: 0
+      });
+    }
+    
+    // 양쪽 유저의 채팅 목록에 추가
+    await db.ref('userChats/' + uid + '/' + chatId).set({ partnerUid: friendUid });
+    await db.ref('userChats/' + friendUid + '/' + chatId).set({ partnerUid: uid });
+    
+    closeFriendModal();
+    alert('친구 추가 완료! ✅');
+    
+  } catch (error) {
+    alert('친구 추가 실패: ' + error.message);
+  }
+}
+
+// ========================================
+// 스태프 관리자 패널 (기존 유지)
+// ========================================
 const STAFF_PW = 'mallang1347';
 
 function goStaff() {
@@ -666,199 +1261,11 @@ function goStaff() {
   }
 }
 
-// === 회원가입 ===
-async function doSignup() {
-  const name = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const pw = document.getElementById('signupPw').value;
-  const errEl = document.getElementById('signupError');
-  const btn = document.getElementById('signupBtn');
-  
-  errEl.style.display = 'none';
-  
-  if (!name || !email || !pw) {
-    errEl.textContent = '모든 항목을 입력해주세요 / Please fill in all fields';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (pw.length < 6) {
-    errEl.textContent = '비밀번호 6자 이상 / Password must be 6+ characters';
-    errEl.style.display = 'block';
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.textContent = '처리중...';
-  
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pw);
-    await cred.user.updateProfile({ displayName: name });
-    
-    // 유저 정보 저장
-    await db.ref('users/' + cred.user.uid).set({
-      name: name,
-      email: email,
-      lang: currentLang,
-      createdAt: Date.now()
-    });
-    
-    // 채팅방 생성
-    await createRoom();
-  } catch (error) {
-    const msg = getAuthErrorMsg(error.code);
-    errEl.textContent = msg;
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = '회원가입 / Sign Up';
-  }
-}
-
-// === 로그인 ===
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pw = document.getElementById('loginPw').value;
-  const errEl = document.getElementById('loginError');
-  const btn = document.getElementById('loginBtn');
-  
-  errEl.style.display = 'none';
-  
-  if (!email || !pw) {
-    errEl.textContent = '이메일과 비밀번호를 입력해주세요 / Please enter email and password';
-    errEl.style.display = 'block';
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.textContent = '처리중...';
-  
-  try {
-    await auth.signInWithEmailAndPassword(email, pw);
-    // onAuthStateChanged가 처리
-  } catch (error) {
-    const msg = getAuthErrorMsg(error.code);
-    errEl.textContent = msg;
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = '로그인 / Login';
-  }
-}
-
-// === 로그아웃 ===
-async function doLogout() {
-  if (!confirm('로그아웃 하시겠습니까? / Logout?')) return;
-  
-  // 리스너 해제
-  if (currentRoomId) {
-    db.ref('rooms/' + currentRoomId + '/messages').off();
-  }
-  currentRoomId = null;
-  currentUser = null;
-  
-  await auth.signOut();
-  showScreen('langScreen');
-}
-
-// === 채팅방 생성 ===
-async function createRoom() {
-  if (!currentUser) return;
-  
-  const uid = currentUser.uid;
-  const name = currentUser.displayName || 'Guest';
-  const email = currentUser.email || '';
-  const roomId = 'room_' + uid;
-  
-  // 기존 방이 있는지 확인
-  const snap = await db.ref('rooms/' + roomId).once('value');
-  if (!snap.exists()) {
-    await db.ref('rooms/' + roomId).set({
-      userName: name,
-      userEmail: email,
-      userLang: currentLang,
-      userId: uid,
-      lastMessage: '',
-      lastMessageTime: Date.now(),
-      unreadCount: 0
-    });
-  }
-  
-  // 유저 데이터에 roomId 저장
-  await db.ref('users/' + uid).update({
-    roomId: roomId,
-    lang: currentLang
-  });
-  
-  currentRoomId = roomId;
-  document.getElementById('userLang').textContent = getFlag(currentLang) + ' ' + currentLang.toUpperCase();
-  document.getElementById('customerInput').placeholder = T[currentLang]?.placeholder || T.en.placeholder;
-  document.getElementById('customerSubtitle').textContent = T[currentLang]?.subtitle || T.en.subtitle;
-  showScreen('customerScreen');
-  listenToMessages('customerMsg', roomId, false);
-}
-
-// === Auth 에러 메시지 ===
-function getAuthErrorMsg(code) {
-  const msgs = {
-    'auth/email-already-in-use': '이미 등록된 이메일입니다 / Email already in use',
-    'auth/invalid-email': '올바른 이메일을 입력해주세요 / Invalid email',
-    'auth/weak-password': '비밀번호가 너무 약합니다 / Password too weak',
-    'auth/user-not-found': '등록되지 않은 이메일입니다 / Email not found',
-    'auth/wrong-password': '비밀번호가 틀렸습니다 / Wrong password',
-    'auth/invalid-credential': '이메일 또는 비밀번호가 틀렸습니다 / Invalid email or password',
-    'auth/too-many-requests': '너무 많은 시도. 잠시 후 다시 시도해주세요 / Too many attempts. Try again later'
-  };
-  return msgs[code] || '오류가 발생했습니다 / An error occurred (' + code + ')';
-}
-
-// === 빠른답변 ===
-function toggleQuickReplies() {
-  const btns = document.querySelectorAll('#quickReplies .quick-reply-btn');
-  btns.forEach(btn => {
-    btn.style.display = btn.style.display === 'none' ? 'inline-block' : 'none';
-  });
-}
-
-function quickReply(key) {
-  if (!selectedRoomId) {
-    alert('고객을 먼저 선택하세요!');
-    return;
-  }
-  const input = document.getElementById('staffInput');
-
-  if (key === 'paypal') {
-    const won = prompt('예약금 (원/KRW):');
-    if (!won) return;
-    const w = parseInt(won.replace(/,/g,''));
-    const usd = (w / 1350).toFixed(1);
-    input.value = `💳 PayPal Payment\n\ndeposit : ${w.toLocaleString()} won / USD ${usd}\n(Please make the payment in USD.)\n\nWe use a fixed exchange rate for overseas payments.\nThe quoted USD amount includes PayPal fees.\n\nhttps://www.paypal.com/ncp/payment/LHVBDE7UWNLD4\n\n• Total Amount – Deposit = On-site Payment (Remaining Balance)\n\n• Your reservation will be confirmed after the deposit payment is completed.\n• If the payment is not completed within 30 minutes, the reservation will be automatically canceled.\n• Cancellations and refunds are available until 6:00 PM (KST), two days before the reservation date.\n• Cancellations or changes made one day before the reservation date are non-refundable.\n• Please send a screenshot of the payment confirmation after completing the payment.`;
-  } else if (key === 'wechat') {
-    const won = prompt('预约金 (韩元/KRW):');
-    if (!won) return;
-    const w = parseInt(won.replace(/,/g,''));
-    input.value = `[WECHAT_QR]\n\n预约金：${w.toLocaleString()} 韩元\n\n• 总付款金额 – 预约金 = 现场支付（余款）\n\n• 本支付系统支持以韩元（KRW）进行付款。\n• 支付预约金后，预约即确认完成。\n• 30分钟内未完成付款，预约将自动取消。\n• 可在预约日前2天（韩国时间下午6点前）取消并退款。\n• 预约前一天取消或更改，预约金不予退还。\n• 付款完成后，请发送付款成功的截图。`;
-  } else if (key === 'japan') {
-    const won = prompt('予約金 (ウォン/KRW):');
-    if (!won) return;
-    const w = parseInt(won.replace(/,/g,''));
-    const jpy = Math.ceil(w / 8.9 / 100) * 100;
-    input.value = `🇯🇵 予約金のご案内\n\n予約金 : ${w.toLocaleString()} won ( ${jpy.toLocaleString()} 円 )\n\npaypay銀行(0033)\nはやぶさ支店(003)\n普通7862427\nキムジョンヒ\n\n海外決済は固定為替レートを適用しております。\nご案内している円（JPY）金額には海外送金手数料が含まれております。\n\n* 支払い後の詳細(画面)をお願いします *\n* 国際送金手数料が含まれた金額です *\n\n• 総お支払い金額 − 予約金 ＝ 当日現地決済（残額）\n\n• 予約金のお支払い完了後、予約が確定となります。\n• 30分以内にお支払いが確認できない場合、予約は自動的にキャンセルとなります。\n• ご予約日の2日前18:00（韓国時間・KST）までキャンセルおよび返金が可能です。\n• ご予約日前日のキャンセルまたは変更は、予約金の返金はできません。\n• お支払い後、決済完了画面（スクリーンショット）をお送りください。`;
-  } else if (key === 'address') {
-    input.value = `📍 [ Address ]\n21-3, Seolleung-ro 161-gil, Gangnam-gu, Seoul, Republic of Korea\n(kor. 서울시 강남구 신사동 662-10)\n\n[DIRECTIONS_BTN]`;
-  } else if (key === 'confirmed') {
-    const info = prompt('고객 예약 정보를 입력하세요\n(예: 3/15(토) 14:00 / Yuki / 메이크업A+헤어B)');
-    if (!info) return;
-    input.value = info + '\n' + quickConfirmed;
-  }
-
-  input.focus();
-  autoResize(input);
-}
-
-// === 스태프: 고객 리스트 ===
 function loadCustomerList() {
   db.ref('rooms').on('value', snap => {
     const rooms = snap.val();
     if (!rooms) {
-      document.getElementById('customerList').innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">아직 고객이 없습니다</div>';
+      document.getElementById('customerList').innerHTML = '<div style="padding:2rem;text-align:center;color:#999;">아직 고객이 없습니다</div>';
       return;
     }
     const html = Object.entries(rooms)
@@ -883,99 +1290,63 @@ function selectCustomer(roomId) {
     const r = snap.val();
     if (!r) return;
     document.getElementById('selectedName').textContent = r.userName || '이름 없음';
-    document.getElementById('selectedInfo').textContent = `${r.userEmail || ''}`;
+    document.getElementById('selectedInfo').textContent = r.userEmail || '';
     document.getElementById('selectedLang').textContent = getFlag(r.userLang) + ' ' + (r.userLang || 'EN').toUpperCase();
   });
   db.ref('rooms/' + roomId + '/unreadCount').set(0);
-  listenToMessages('staffMsg', roomId, true);
+  listenStaffMessages(roomId);
 }
 
-// === 메시지 리스닝 ===
-function listenToMessages(containerId, roomId, isStaff) {
-  const container = document.getElementById(containerId);
+function listenStaffMessages(roomId) {
+  const container = document.getElementById('staffMsg');
   container.innerHTML = '';
   
-  db.ref('rooms/' + roomId + '/messages').off('child_added');
-  db.ref('rooms/' + roomId + '/messages').off('child_changed');
-  
+  db.ref('rooms/' + roomId + '/messages').off();
   db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
     const msg = snap.val();
     if (!msg) return;
     const msgKey = snap.key;
     const div = document.createElement('div');
-    div.className = 'message ' + (msg.isStaff === isStaff ? 'from-me' : 'from-them');
     div.id = 'msg-' + msgKey;
-    
-    const isMine = msg.isStaff === isStaff;
     
     if (msg.deleted) {
       div.style.display = 'none';
-    } else {
-      const deleteBtn = (isMine && isStaff) ? `<button class="msg-delete" onclick="deleteMessage('${roomId}','${msgKey}')" title="삭제">✕</button>` : '';
-      div.innerHTML = `
-        <div class="msg-bubble" style="position:relative;">
-          ${deleteBtn}
-          ${renderMessage(msg.text)}
-        </div>
-        <div class="msg-time">${formatTime(msg.timestamp)}</div>
-      `;
+      container.appendChild(div);
+      return;
     }
+    
+    div.className = 'message ' + (msg.isStaff ? 'from-me' : 'from-them');
+    const deleteBtn = msg.isStaff ? `<button class="msg-delete" onclick="deleteMessage('${roomId}','${msgKey}')" title="삭제">✕</button>` : '';
+    
+    let content = '';
+    if (msg.imageUrl) content += `<img src="${msg.imageUrl}" class="msg-img" onclick="window.open('${msg.imageUrl}','_blank')">`;
+    if (msg.text) content += renderMessage(msg.text);
+    
+    div.innerHTML = `
+      <div class="msg-bubble" style="position:relative;">${deleteBtn}${content}</div>
+      <div class="msg-time">${formatTime(msg.timestamp)}</div>
+    `;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
   });
   
   db.ref('rooms/' + roomId + '/messages').on('child_changed', snap => {
     const msg = snap.val();
-    const msgKey = snap.key;
-    const div = document.getElementById('msg-' + msgKey);
-    if (!div || !msg) return;
-    if (msg.deleted) {
-      div.style.display = 'none';
-    }
+    const div = document.getElementById('msg-' + snap.key);
+    if (div && msg && msg.deleted) div.style.display = 'none';
   });
 }
 
 async function deleteMessage(roomId, msgKey) {
   if (!confirm('이 메시지를 삭제하시겠습니까?')) return;
-  try {
-    await db.ref('rooms/' + roomId + '/messages/' + msgKey).update({ deleted: true, text: '' });
-  } catch (error) {
-    alert('삭제 실패: ' + error.message);
-  }
-}
-
-// === 메시지 전송 ===
-async function sendCustomerMsg() {
-  if (isSending) return;
-  const input = document.getElementById('customerInput');
-  const text = input.value.trim();
-  if (!text || !currentRoomId) return;
-  
-  isSending = true;
-  input.value = '';
-  input.style.height = 'auto';
-  
-  try {
-    await db.ref('rooms/' + currentRoomId + '/messages').push({
-      text: text, isStaff: false, timestamp: Date.now()
-    });
-    await db.ref('rooms/' + currentRoomId).update({
-      lastMessage: text, lastMessageTime: Date.now(),
-      unreadCount: firebase.database.ServerValue.increment(1)
-    });
-  } catch (error) {
-    alert('메시지 전송 실패: ' + error.message);
-  } finally { isSending = false; }
+  await db.ref('rooms/' + roomId + '/messages/' + msgKey).update({ deleted: true, text: '' });
 }
 
 async function sendStaffMsg() {
   if (isSending) return;
   const input = document.getElementById('staffInput');
   const text = input.value.trim();
-  if (!text || !selectedRoomId) {
-    alert('고객을 먼저 선택하세요!');
-    return;
-  }
+  if (!text || !selectedRoomId) { alert('고객을 먼저 선택하세요!'); return; }
   
   isSending = true;
   input.value = '';
@@ -988,57 +1359,169 @@ async function sendStaffMsg() {
     await db.ref('rooms/' + selectedRoomId).update({
       lastMessage: text, lastMessageTime: Date.now()
     });
-  } catch (error) {
-    alert('메시지 전송 실패: ' + error.message);
-  } finally { isSending = false; }
+  } catch (error) { alert('전송 실패: ' + error.message); }
+  finally { isSending = false; }
 }
 
-// === 검색 ===
-function searchCustomers() {
-  const q = document.getElementById('searchBox').value.toLowerCase();
-  document.querySelectorAll('.customer-item').forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.style.display = text.includes(q) ? 'block' : 'none';
+// 빠른답변
+function toggleQuickReplies() {
+  document.querySelectorAll('#quickReplies .quick-reply-btn').forEach(btn => {
+    btn.style.display = btn.style.display === 'none' ? 'inline-block' : 'none';
   });
 }
 
-// === 텍스트 입력창 자동 크기 조절 ===
-function autoResize(el) {
-  el.style.height = 'auto';
-  const maxH = 120;
-  if (el.scrollHeight > maxH) {
-    el.style.height = maxH + 'px';
-    el.style.overflowY = 'auto';
-  } else {
-    el.style.height = el.scrollHeight + 'px';
-    el.style.overflowY = 'hidden';
+function quickReply(key) {
+  if (!selectedRoomId) { alert('고객을 먼저 선택하세요!'); return; }
+  const input = document.getElementById('staffInput');
+  
+  if (key === 'paypal') {
+    const won = prompt('예약금 (원/KRW):');
+    if (!won) return;
+    const w = parseInt(won.replace(/,/g,''));
+    const usd = (w / 1350).toFixed(1);
+    input.value = `💳 PayPal Payment\n\ndeposit : ${w.toLocaleString()} won / USD ${usd}\n(Please make the payment in USD.)\n\nhttps://www.paypal.com/ncp/payment/LHVBDE7UWNLD4\n\n• Total Amount – Deposit = On-site Payment\n• Your reservation will be confirmed after the deposit payment.\n• If not completed within 30 minutes, reservation will be canceled.\n• Cancellations available until 6:00 PM (KST), two days before.\n• Please send a screenshot after completing payment.`;
+  } else if (key === 'wechat') {
+    const won = prompt('预约金 (韩元/KRW):');
+    if (!won) return;
+    const w = parseInt(won.replace(/,/g,''));
+    input.value = `[WECHAT_QR]\n\n预约金：${w.toLocaleString()} 韩元\n\n• 总付款金额 – 预约金 = 现场支付\n• 支付预约金后，预约即确认完成。\n• 30分钟内未完成付款，预约将自动取消。\n• 可在预约日前2天下午6点前取消并退款。\n• 付款完成后，请发送截图。`;
+  } else if (key === 'japan') {
+    const won = prompt('予約金 (ウォン/KRW):');
+    if (!won) return;
+    const w = parseInt(won.replace(/,/g,''));
+    const jpy = Math.ceil(w / 8.9 / 100) * 100;
+    input.value = `🇯🇵 予約金のご案内\n\n予約金 : ${w.toLocaleString()} won ( ${jpy.toLocaleString()} 円 )\n\npaypay銀行(0033)\nはやぶさ支店(003)\n普通7862427\nキムジョンヒ\n\n* 支払い後の詳細(画面)をお願いします *\n\n• 総お支払い金額 − 予約金 ＝ 当日現地決済\n• 予約金のお支払い完了後、予約が確定となります。\n• 30分以内にお支払いが確認できない場合、予約は自動キャンセルとなります。\n• ご予約日の2日前18:00(KST)までキャンセル可能です。`;
+  } else if (key === 'address') {
+    input.value = `📍 [ Address ]\n21-3, Seolleung-ro 161-gil, Gangnam-gu, Seoul\n(서울시 강남구 신사동 662-10)\n\n[DIRECTIONS_BTN]`;
+  } else if (key === 'confirmed') {
+    const info = prompt('고객 예약 정보 입력\n(예: 3/15(토) 14:00 / Yuki / 메이크업A+헤어B)');
+    if (!info) return;
+    input.value = info + '\n' + quickConfirmed;
   }
+  input.focus();
+  autoResize(input);
 }
 
-document.getElementById('customerInput').addEventListener('input', function() { autoResize(this); });
-document.getElementById('staffInput').addEventListener('input', function() { autoResize(this); });
+function searchCustomers() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  document.querySelectorAll('.customer-item').forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+  });
+}
 
-// === 키보드 ===
-document.getElementById('customerInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault(); sendCustomerMsg();
+// ========================================
+// 메뉴/가격표 사이드바
+// ========================================
+const menuData = {
+  makeup: `<h4>💄 [ Lady - Make up ]</h4>
+<div class="price-row"><span>A (daily)</span><span>₩100,000</span></div>
+<div class="price-row"><span>B (idol, photo shoot)</span><span>₩110,000</span></div>
+<h4>🤵 [ Man - Make up ]</h4>
+<div class="price-row"><span>A (daily)</span><span>₩60,000</span></div>
+<div class="price-row"><span>B (idol, photo shoot)</span><span>₩90,000</span></div>
+<h4>📚 [ Make up Lesson ]</h4>
+<div class="price-row"><span>90 min</span><span>₩350,000</span></div>
+<div class="divider"></div>
+<h4>✨ Hair Styling (Setting)</h4>
+<p class="note">(+ hair wash +₩20,000)</p>
+<div class="price-row"><span>[ Lady ] A (daily)</span><span>₩45,000</span></div>
+<div class="price-row"><span>B (semi up style)</span><span>₩60,000</span></div>
+<div class="price-row"><span>C (up style)</span><span>₩80,000</span></div>
+<div class="price-row"><span>[ Man ]</span><span>₩40,000</span></div>
+<div class="divider"></div>
+<h4>⏰ Early Charge (before 10:00 AM)</h4>
+<div class="price-row"><span>AM 9:00 Hair</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 9:00 Make up</span><span>+₩10,000</span></div>
+<div class="price-row"><span>AM 8:00 Hair</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 8:00 Make up</span><span>+₩20,000</span></div>
+<div class="price-row"><span>AM 7:00 Hair</span><span>+₩30,000</span></div>
+<div class="price-row"><span>AM 7:00 Make up</span><span>+₩30,000</span></div>`,
+
+  hair: `<h4>✂️ Cut</h4>
+<div class="price-row"><span>Lady cut</span><span>₩60,000~</span></div>
+<div class="price-row"><span>Man cut</span><span>₩50,000~</span></div>
+<h4>🎨 Color</h4>
+<div class="price-row"><span>All color</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Root color</span><span>₩90,000~</span></div>
+<div class="price-row"><span>Bleach</span><span>₩100,000~</span></div>
+<div class="price-row"><span>Man color</span><span>₩120,000~</span></div>
+<h4>🌀 Perm</h4>
+<div class="price-row"><span>Setting perm</span><span>₩140,000~</span></div>
+<div class="price-row"><span>Down perm</span><span>₩120,000~</span></div>
+<div class="price-row"><span>Straight</span><span>₩180,000~</span></div>
+<div class="price-row"><span>Man perm</span><span>₩140,000~</span></div>
+<h4>💊 Treatment</h4>
+<div class="price-row"><span>Basic</span><span>₩50,000~</span></div>
+<div class="price-row"><span>Premium</span><span>₩80,000~</span></div>
+<p class="note">* 가격은 길이/모량에 따라 달라질 수 있습니다.<br>* 정확한 가격은 상담 후 안내드립니다.</p>`,
+
+  spa: `<h4>💆 Head Spa</h4>
+<div class="price-row"><span>Basic (30min)</span><span>₩60,000</span></div>
+<div class="price-row"><span>Premium (60min)</span><span>₩100,000</span></div>
+<div class="price-row"><span>Scalp scaling + Spa</span><span>₩120,000</span></div>`,
+
+  photo: `<h4>📸 Profile / ID Photo</h4>
+<div class="price-row"><span>증명사진 (ID)</span><span>₩60,000</span></div>
+<div class="price-row"><span>프로필 촬영</span><span>₩120,000</span></div>
+<div class="price-row"><span>커플 촬영</span><span>₩220,000</span></div>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__id" target="_blank">@mallang__id</a></p>
+<p class="note">📷 <a class="link" href="https://www.instagram.com/mallang__photo" target="_blank">@mallang__photo</a></p>`,
+
+  booking: `<h4>📅 예약하기 / Reservation</h4>
+<p class="note" style="margin-bottom:0.8rem;">
+• 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.<br>
+• 1시간 이내에 예약금 결제가 가능하시면 아래 내용을 작성해 주세요.<br>
+• 총금액에서 예약금을 제외한 나머지 금액을 현장에서 결제합니다.<br>
+• 예약금 결제 후 스크린샷을 꼭 이곳에 남겨주세요. 그렇지 못할 경우 예약이 확정되지 않습니다.
+</p>
+<div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
+<p><b>날짜 :</b> 월 / 일 ( 요일 )</p>
+<p><b>시간 :</b></p>
+<p><b>이름(영문) :</b></p>
+<p><b>인원 :</b></p>
+<p><b>원하시는 서비스 :</b></p>
+<p><b>결제 방법 :</b></p>
+<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
+<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">📋 복사하기 (Copy)</button>`
+};
+
+function showMenu(tab) {
+  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('menuContent').innerHTML = menuData[tab] || '';
+}
+
+function showPriceMenu() { toggleMobileMenu(); }
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('menuSidebar');
+  const overlay = document.getElementById('menuOverlay');
+  sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('active');
+  if (sidebar.classList.contains('mobile-open') && !document.getElementById('menuContent').innerHTML) {
+    showMenu('makeup');
   }
-});
-document.getElementById('staffInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault(); sendStaffMsg();
-  }
-});
+}
+function closeMobileMenu() {
+  document.getElementById('menuSidebar').classList.remove('mobile-open');
+  document.getElementById('menuOverlay').classList.remove('active');
+}
 
-// 로그인/회원가입 Enter키
-document.getElementById('loginPw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
-document.getElementById('signupPw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSignup();
-});
+function copyBookingForm() {
+  const text = `날짜 : 월 / 일 ( 요일 )
+시간 :
+이름(영문) :
+인원 :
+원하시는 서비스 :
+결제 방법 :`;
+  navigator.clipboard.writeText(text).then(() => {
+    event.target.textContent = '✅ 복사완료!';
+    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
+  });
+}
 
-// === 유틸 ===
+// ========================================
+// 유틸리티
+// ========================================
 function getFlag(lang) {
   const flags = { ko: '🇰🇷', en: '🌐', zh: '🇨🇳', ja: '🇯🇵', th: '🇹🇭', vi: '🇻🇳' };
   return flags[lang] || '🌐';
@@ -1058,212 +1541,74 @@ function formatTime(ts) {
 function previewText(text) {
   if (!text) return '새로운 대화';
   let t = text.replace(/\[WECHAT_QR\]/g, '🇨🇳 위챗페이').replace(/\[DIRECTIONS_BTN\]/g, '').replace(/\n/g, ' ').trim();
-  if (t.length > 40) t = t.substring(0, 40) + '...';
+  if (t.length > 35) t = t.substring(0, 35) + '...';
   return escapeHtml(t);
 }
 
-// === 메뉴 사이드바 ===
-const menuData = {
-  makeup: `<h4>💄 [ Lady - Make up ]</h4>
-<div class="price-row"><span>A (daily)</span><span>₩100,000</span></div>
-<div class="price-row"><span>B (idol, photo shoot)</span><span>₩110,000</span></div>
-
-<h4>🤵 [ Man - Make up ]</h4>
-<div class="price-row"><span>A (daily)</span><span>₩60,000</span></div>
-<div class="price-row"><span>B (idol, photo shoot)</span><span>₩90,000</span></div>
-
-<h4>📚 [ Make up Lesson ]</h4>
-<div class="price-row"><span>90 min</span><span>₩350,000</span></div>
-
-<div class="divider"></div>
-
-<h4>✨ Hair Styling (Setting)</h4>
-<p class="note">(+ hair wash +₩20,000)</p>
-<div class="price-row"><span>[ Lady ] A (daily)</span><span>₩45,000</span></div>
-<div class="price-row"><span>B (semi up style)</span><span>₩60,000</span></div>
-<div class="price-row"><span>C (up style)</span><span>₩80,000</span></div>
-<div class="price-row"><span>[ Man ]</span><span>₩40,000</span></div>
-
-<p class="note">* Please decide the style after consulting with the designer.<br>*デザイナーとご相談の上、スタイルをお決めください。</p>
-
-<div class="divider"></div>
-
-<h4>⏰ Early Charge (before 10:00 AM)</h4>
-<p class="note">+早朝料金</p>
-<div class="price-row"><span>AM 9:00 Hair</span><span>+₩10,000</span></div>
-<div class="price-row"><span>AM 9:00 Make up</span><span>+₩10,000</span></div>
-<div class="price-row"><span>AM 8:00 Hair</span><span>+₩20,000</span></div>
-<div class="price-row"><span>AM 8:00 Make up</span><span>+₩20,000</span></div>
-<div class="price-row"><span>AM 7:00 Hair</span><span>+₩30,000</span></div>
-<div class="price-row"><span>AM 7:00 Make up</span><span>+₩30,000</span></div>`,
-
-  hair: `<h4>✂️ Cut</h4>
-<div class="price-row"><span>Lady</span><span>₩55,000</span></div>
-<div class="price-row"><span>Man</span><span>₩40,000</span></div>
-
-<h4>🌀 Perm</h4>
-<div class="price-row"><span>Lady</span><span>₩220,000 ~</span></div>
-<div class="price-row"><span>Man</span><span>₩140,000 ~</span></div>
-
-<h4>🎨 Color</h4>
-<div class="price-row"><span>Lady</span><span>₩140,000 ~</span></div>
-<div class="price-row"><span>Man</span><span>₩120,000 ~</span></div>
-
-<h4>💫 Extension</h4>
-<div class="price-row"><span>Normal</span><span>₩400,000 ~</span></div>
-<div class="price-row"><span>Premium</span><span>₩600,000 ~</span></div>`,
-
-  spa: `<h4>🧖 Head Spa</h4>
-<div class="price-row"><span>30 min</span><span>₩70,000</span></div>
-<div class="price-row"><span>60 min</span><span>₩130,000</span></div>
-
-<h4>💆 Hair Treatment</h4>
-<div class="price-row"><span>60 min</span><span>₩140,000 ~</span></div>
-
-<h4>🧖‍♀️ Head Spa + Treatment</h4>
-<div class="price-row"><span>90 min</span><span>₩230,000</span></div>`,
-
-  photo: `<h4>📷 프리미엄 증명사진</h4>
-<div class="price-row"><span>30 min</span><span>₩60,000</span></div>
-<p><a href="https://instagram.com/mallang__id" target="_blank" class="msg-link">@mallang__id</a></p>
-<p>• 신분증, 학생증, 사원증, 기념용 사진</p>
-<p>• 배경색 선택 가능</p>
-<p>• 정면 또는 상반신 측면 촬영만 가능</p>
-<p>• 촬영 사진 중 1장 선택 → 1:1 리터칭 포함</p>
-<p>• 추가 리터칭: 1장당 ₩40,000</p>
-<p><b>인화 포함</b></p>
-<p>• 5.5 × 7.5 cm (1매)</p>
-<p>• 5.5 × 8 cm (2매)</p>
-<p>• 3.5 × 4.5 cm (8매)</p>
-
-<div class="divider"></div>
-
-<h4>📸 프로필 촬영</h4>
-<div class="price-row"><span>60 min</span><span>₩120,000</span></div>
-<p><a href="https://instagram.com/mallang__photo" target="_blank" class="msg-link">@mallang__photo</a></p>
-<p>• 4가지 무드 중 1가지 선택, 자유 포즈</p>
-<p>• 상반신 및 전신 촬영</p>
-<p>• 원본 전체 이메일 전달 (리터칭 1장 포함)</p>
-<p>• 리터칭 소요 기간: 7~14일</p>
-<p>• 컨셉 1개당 의상 1벌</p>
-<p>• 추가 리터칭: 1장당 ₩40,000</p>
-<p class="note">*의상은 직접 갖고 오셔야 합니다</p>
-
-<div class="divider"></div>
-
-<h4>💑 커플 프로필 촬영</h4>
-<div class="price-row"><span>60 min</span><span>₩220,000</span></div>
-<p>• 포토 작가와 무드 및 포즈 상담</p>
-<p>• 상반신 및 전신 촬영</p>
-<p>• 원본 전체 이메일 전달 (리터칭 1장 포함)</p>
-<p>• 리터칭 소요 기간: 7~14일</p>
-<p>• 컨셉 1개당 의상 1벌</p>
-<p>• 추가 리터칭: 1장당 ₩40,000</p>
-<p class="note">*의상은 직접 갖고 오셔야 합니다</p>`,
-
-  booking: `<h4>📅 예약 안내 / Reservation</h4>
-<p>• 먼저 고객님의 정보가 필요합니다.</p>
-<p>• 예약금 결제 후 예약이 확정됩니다.</p>
-<p>• 예약일 기준 2일 전 오후 6시(KST)까지 취소 및 환불이 가능합니다.</p>
-<p>• 1시간 이내에 예약금 결제가 가능하시면 아래 내용을 작성해 주세요.</p>
-<p>• 총금액에서 예약금을 제외한 나머지 금액을 현장에서 결제합니다.</p>
-<p>• 예약금 결제 후 스크린샷을 꼭 이곳에 남겨주세요. 그렇지 못할 경우 예약이 확정되지 않습니다.</p>
-
-<div class="divider"></div>
-
-<p><b>날짜 :</b> 월 / 일 ( 요일 )</p>
-<p><b>시간 :</b></p>
-<p><b>이름(영문) :</b></p>
-<p><b>인원 :</b></p>
-<p><b>원하시는 서비스 :</b></p>
-<p><b>결제 방법 :</b></p>
-<p class="note">🇨🇳 중국 : 위챗페이, 알리페이<br>🇯🇵 일본 : 계좌이체 (페이페이 은행)<br>💳 공용 : 카드결제</p>
-<button onclick="copyBookingForm()" style="margin-top:1rem;width:100%;padding:0.7rem;background:#C9A063;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">📋 복사하기 (Copy)</button>`
-};
-
-function copyBookingForm() {
-  const text = `날짜 : 월 / 일 ( 요일 )
-시간 :
-이름(영문) :
-인원 :
-원하시는 서비스 :
-결제 방법 :`;
-  navigator.clipboard.writeText(text).then(() => {
-    event.target.textContent = '✅ 복사완료!';
-    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
-  }).catch(() => {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    event.target.textContent = '✅ 복사완료!';
-    setTimeout(() => { event.target.textContent = '📋 복사하기 (Copy)'; }, 2000);
-  });
-}
-
-// 사이드바 확장/축소 (PC)
-function expandSidebar() {
-  document.querySelector('.menu-sidebar').classList.add('expanded');
-}
-function collapseSidebar() {
-  document.querySelector('.menu-sidebar').classList.remove('expanded');
-}
-
-// 모바일 메뉴 토글
-function toggleMobileMenu() {
-  const sidebar = document.querySelector('.menu-sidebar');
-  const overlay = document.getElementById('menuOverlay');
-  sidebar.classList.toggle('mobile-open');
-  overlay.classList.toggle('active');
-}
-function closeMobileMenu() {
-  document.querySelector('.menu-sidebar').classList.remove('mobile-open');
-  document.getElementById('menuOverlay').classList.remove('active');
-}
-
-function showMenu(key) {
-  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('menuContent').innerHTML = menuData[key] || '';
-}
-
-// 초기 메뉴 로드
-document.addEventListener('DOMContentLoaded', () => {
-  const mc = document.getElementById('menuContent');
-  if (mc) mc.innerHTML = menuData.makeup;
-});
-
 function escapeHtml(text) {
-  if (!text) return '';
   const div = document.createElement('div');
-  div.textContent = text;
+  div.appendChild(document.createTextNode(text));
   return div.innerHTML;
 }
 
 function renderMessage(text) {
   if (!text) return '';
   let html = escapeHtml(text);
-
-  // Convert URLs to clickable links FIRST (before marker replacement)
   html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="msg-link">$1</a>');
-
-  // Replace special markers (inserted HTML won't be double-processed)
   html = html.replace('[WECHAT_QR]', '<img src="' + WECHAT_QR + '" class="msg-img" alt="WeChat Pay QR">');
   html = html.replace('[DIRECTIONS_BTN]', '<a href="https://www.instagram.com/reel/DIvxoGwy482/?igsh=MTI5cW8wM3MwNGM1OA==" target="_blank" class="msg-link-btn">📍 How to get here (Video)</a>');
-
-  // Bold/highlight: **text** → highlighted
   html = html.replace(/\*\*(.+?)\*\*/g, '<span class="msg-highlight">$1</span>');
-
-  // Center alignment: [CENTER]text[/CENTER]
   html = html.replace(/\[CENTER\](.*?)\[\/CENTER\]\n?/g, '<div style="text-align:center;margin:-0.2em 0;padding:0;line-height:1.2;">$1</div>');
-
-  // Newlines
   html = html.replace(/\n/g, '<br>');
   return html;
 }
+
+function getAuthErrorMsg(code) {
+  const msgs = {
+    'auth/email-already-in-use': '이미 등록된 이메일입니다 / Email already in use',
+    'auth/invalid-email': '올바른 이메일을 입력해주세요 / Invalid email',
+    'auth/weak-password': '비밀번호가 너무 약합니다 / Password too weak',
+    'auth/user-not-found': '등록되지 않은 이메일입니다 / Email not found',
+    'auth/wrong-password': '비밀번호가 틀렸습니다 / Wrong password',
+    'auth/invalid-credential': '이메일 또는 비밀번호가 틀렸습니다 / Invalid credentials',
+    'auth/too-many-requests': '잠시 후 다시 시도해주세요 / Too many attempts'
+  };
+  return msgs[code] || '오류가 발생했습니다 (' + code + ')';
+}
+
+// ========================================
+// 입력창 자동 크기
+// ========================================
+function autoResize(el) {
+  el.style.height = 'auto';
+  const maxH = 120;
+  if (el.scrollHeight > maxH) {
+    el.style.height = maxH + 'px';
+    el.style.overflowY = 'auto';
+  } else {
+    el.style.height = el.scrollHeight + 'px';
+    el.style.overflowY = 'hidden';
+  }
+}
+
+// 이벤트 리스너
+document.getElementById('chatInput').addEventListener('input', function() { autoResize(this); });
+document.getElementById('staffInput').addEventListener('input', function() { autoResize(this); });
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendChatMsg(); }
+});
+document.getElementById('staffInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendStaffMsg(); }
+});
+document.getElementById('loginPw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('signupPw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignup();
+});
+
+// 초기 메뉴 로드
+showMenu('makeup');
 </script>
 </body>
 </html>

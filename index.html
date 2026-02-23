@@ -440,7 +440,7 @@ body {
   <div class="chatlist-header">
     <h2 id="chatListTitle">채팅</h2>
     <div class="chatlist-header-btns">
-      <button onclick="showPriceMenu()" id="priceMenuBtn" style="display:none;">☰ Price</button>
+      <button onclick="showPriceMenu()" id="priceMenuBtn" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;border-radius:20px;">💰 Price</button>
       <button onclick="showFriendModal()">+ 친구추가</button>
       <button onclick="doLogout()" style="font-size:0.8rem;">로그아웃</button>
     </div>
@@ -474,20 +474,8 @@ body {
       <h3 id="roomPartnerName">-</h3>
       <p id="roomPartnerInfo"></p>
     </div>
-    <button class="mobile-menu-btn" id="roomPriceBtn" onclick="toggleMobileMenu()" style="display:none;">☰ Price</button>
+    <button class="mobile-menu-btn" id="roomPriceBtn" onclick="toggleMobileMenu()" style="display:none;background:#C9A063;color:white;border:1px solid #C9A063;font-size:0.9rem;padding:0.4rem 1rem;font-weight:600;">💰 Price</button>
     <div class="lang-badge" id="roomPartnerLang"></div>
-  </div>
-  <!-- 메뉴 사이드바 (오버레이) -->
-  <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
-  <div class="menu-sidebar" id="menuSidebar">
-    <div class="menu-tabs">
-      <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
-      <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
-      <div class="menu-tab" onclick="showMenu('spa')">🧖 스파</div>
-      <div class="menu-tab" onclick="showMenu('photo')">📷 포토</div>
-      <div class="menu-tab" onclick="showMenu('booking')">📅 예약하기</div>
-    </div>
-    <div class="menu-content" id="menuContent"></div>
   </div>
   <div class="messages" id="chatMessages"></div>
   <div id="imgPreviewArea"></div>
@@ -497,6 +485,19 @@ body {
     <textarea class="msg-input" id="chatInput" rows="1" placeholder="메시지를 입력하세요..."></textarea>
     <button class="send-btn" onclick="sendChatMsg()">전송</button>
   </div>
+</div>
+
+<!-- 메뉴 사이드바 (전역 오버레이) -->
+<div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
+<div class="menu-sidebar" id="menuSidebar">
+  <div class="menu-tabs">
+    <div class="menu-tab active" onclick="showMenu('makeup')">💄 메이크업</div>
+    <div class="menu-tab" onclick="showMenu('hair')">💇 헤어</div>
+    <div class="menu-tab" onclick="showMenu('spa')">🧖 스파</div>
+    <div class="menu-tab" onclick="showMenu('photo')">📷 포토</div>
+    <div class="menu-tab" onclick="showMenu('booking')">📅 예약하기</div>
+  </div>
+  <div class="menu-content" id="menuContent"></div>
 </div>
 
 <!-- 이미지 업로드 진행 -->
@@ -666,6 +667,14 @@ auth.onAuthStateChanged(async (user) => {
     
     if (currentUserData) {
       currentLang = currentUserData.lang || 'en';
+      
+      // 기존 고객에게 friendCode가 없으면 자동 생성
+      if (currentUserData.role !== 'designer' && !currentUserData.friendCode) {
+        const code = await getUniqueCode();
+        await db.ref('users/' + user.uid).update({ friendCode: code });
+        await db.ref('customerCodes/' + code).set(user.uid);
+        currentUserData.friendCode = code;
+      }
       
       // 고객이면 관리자 채팅방 확인/생성
       if (currentUserData.role !== 'designer') {
@@ -1667,8 +1676,7 @@ document.getElementById('signupPw').addEventListener('keydown', e => {
   if (e.key === 'Enter') doSignup();
 });
 
-// 초기 메뉴 로드
-showMenu('makeup');
+// 초기 메뉴는 열 때 로드
 </script>
 </body>
 </html>

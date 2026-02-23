@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { text, targetLang } = req.body;
+  const { text, targetLang, context } = req.body;
   if (!text || !targetLang) return res.status(400).json({ error: 'Missing text or targetLang' });
 
   // 한국어→한국어는 번역 불필요
@@ -26,6 +26,12 @@ export default async function handler(req, res) {
   };
   const langName = langMap[targetLang] || 'English';
 
+  const contextInfo = context === 'staff_to_customer' 
+    ? 'The message is from a beauty salon STAFF replying TO a customer.' 
+    : context === 'customer_to_staff'
+    ? 'The message is from a CUSTOMER writing TO beauty salon staff.'
+    : 'The message is from a beauty salon chat.';
+
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -34,7 +40,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         temperature: 0.3,
         max_tokens: 1000,
         messages: [
@@ -42,11 +48,14 @@ export default async function handler(req, res) {
             role: 'system',
             content: `Translate the following text to ${langName}. Output ONLY the translation, nothing else.
 
+Context: ${contextInfo}
+
 CRITICAL RULES:
-- Translate word-for-word as accurately as possible
+- Translate accurately preserving the original meaning and intent
 - NEVER add your own words, explanations, responses, or interpretations
-- NEVER answer or respond to the message - just translate it
-- For example: "在吗" → "계세요?" (NOT an answer to the question)
+- NEVER answer or respond to the message - ONLY translate it
+- For example: "在吗" → "계세요?" (NOT an answer like "네, 있어요")
+- For example: "있어요" from staff → "在的" (NOT "在吗")
 - Keep proper nouns unchanged: MALLANG, PayPal, WeChat, Instagram, 小红书
 - Keep all URLs, links, tags like [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] unchanged
 - Keep numbers, prices (₩, won, USD, 円), dates, times unchanged

@@ -209,6 +209,13 @@ body {
   margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px dashed #DDD;
   font-size: 0.85rem; color: #888;
 }
+.scroll-bottom-btn {
+  position: fixed; bottom: 80px; right: 20px; z-index: 50;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #C9A063; color: white; border: none;
+  font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  display: flex; align-items: center; justify-content: center;
+}
 
 /* === 입력 영역 === */
 .input-area {
@@ -486,6 +493,7 @@ body {
     <div class="lang-badge" id="roomPartnerLang"></div>
   </div>
   <div class="messages" id="chatMessages"></div>
+  <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="scrollToBottom()" style="display:none;">↓</button>
   <div id="imgPreviewArea"></div>
   <div class="input-area">
     <button class="img-upload-btn" onclick="document.getElementById('imageInput').click()">📷</button>
@@ -1096,6 +1104,10 @@ function openChat(chatId, type, partnerUid) {
   
   showScreen('chatRoomScreen');
   
+  // 메시지 로드 후 최근 대화로 자동 스크롤
+  setTimeout(() => scrollToBottom(), 500);
+  setTimeout(() => scrollToBottom(), 1500);
+  
   // 예약 양식 대기 중이면 채팅 입력창에 넣기
   if (pendingBookingForm) {
     setTimeout(() => {
@@ -1204,6 +1216,26 @@ function toggleOriginal(id) {
     btn.textContent = '📄 원문 보기';
   }
 }
+
+function scrollToBottom() {
+  const container = document.getElementById('chatMessages');
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+  document.getElementById('scrollBottomBtn').style.display = 'none';
+}
+
+// 스크롤 위치에 따라 화살표 버튼 표시/숨김
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('chatMessages');
+  if (container) {
+    container.addEventListener('scroll', () => {
+      const btn = document.getElementById('scrollBottomBtn');
+      const gap = container.scrollHeight - container.scrollTop - container.clientHeight;
+      btn.style.display = gap > 200 ? 'flex' : 'none';
+    });
+  }
+});
 
 // ========================================
 // 메시지 전송
@@ -1901,7 +1933,7 @@ zh: {
 • 付款后请务必在此发送截图，否则预约将无法确认。
 </p>
 <div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
-<p><b>日期 :</b> 月 / 日 ( 星期 )</p>
+<p><b>日期 :</b> 月 / 日 ( 星期几 )</p>
 <p><b>时间 :</b></p>
 <p><b>姓名(英文) :</b></p>
 <p><b>人数 :</b></p>
@@ -2095,7 +2127,7 @@ th: {
 • กรุณาส่งภาพหน้าจอการชำระเงินที่นี่ หากไม่ส่งจะไม่สามารถยืนยันการจองได้
 </p>
 <div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
-<p><b>วันที่ :</b> เดือน / วัน ( วัน )</p>
+<p><b>วันที่ :</b> เดือน / วัน (ตัวอย่าง: วันจันทร์)</p>
 <p><b>เวลา :</b></p>
 <p><b>ชื่อ(ภาษาอังกฤษ) :</b></p>
 <p><b>จำนวนคน :</b></p>
@@ -2192,7 +2224,7 @@ vi: {
 • Vui lòng gửi ảnh chụp màn hình thanh toán tại đây. Nếu không gửi, đặt lịch sẽ không được xác nhận.
 </p>
 <div style="border-top:2px dashed #DDD;margin:1rem 0;"></div>
-<p><b>Ngày :</b> Tháng / Ngày ( Thứ )</p>
+<p><b>Ngày :</b> Tháng / Ngày (ví dụ: Thứ Hai)</p>
 <p><b>Giờ :</b></p>
 <p><b>Tên (tiếng Anh) :</b></p>
 <p><b>Số người :</b></p>
@@ -2257,10 +2289,10 @@ function fillBookingForm() {
   const forms = {
     ko: `날짜 : 월 / 일 ( 요일 )\n시간 :\n이름(영문) :\n인원 :\n원하시는 서비스 :\n결제 방법 :`,
     en: `Date : Month / Day ( Day of week )\nTime :\nName :\nNumber of guests :\nService :\nPayment method :`,
-    zh: `日期 : 月 / 日 ( 星期 )\n时间 :\n姓名(英文) :\n人数 :\n希望的服务 :\n付款方式 :`,
+    zh: `日期 : 月 / 日 ( 星期几 )\n时间 :\n姓名(英文) :\n人数 :\n希望的服务 :\n付款方式 :`,
     ja: `日付 : 月 / 日 ( 曜日 )\n時間 :\nお名前(英語) :\n人数 :\nご希望のサービス :\nお支払い方法 :`,
-    th: `วันที่ : เดือน / วัน ( วัน )\nเวลา :\nชื่อ(ภาษาอังกฤษ) :\nจำนวนคน :\nบริการที่ต้องการ :\nวิธีชำระเงิน :`,
-    vi: `Ngày : Tháng / Ngày ( Thứ )\nGiờ :\nTên (tiếng Anh) :\nSố người :\nDịch vụ mong muốn :\nPhương thức thanh toán :`
+    th: `วันที่ : เดือน / วัน (ตัวอย่าง: วันจันทร์)\nเวลา :\nชื่อ(ภาษาอังกฤษ) :\nจำนวนคน :\nบริการที่ต้องการ :\nวิธีชำระเงิน :`,
+    vi: `Ngày : Tháng / Ngày (ví dụ: Thứ Hai)\nGiờ :\nTên (tiếng Anh) :\nSố người :\nDịch vụ mong muốn :\nPhương thức thanh toán :`
   };
   const form = forms[currentLang] || forms['en'];
   

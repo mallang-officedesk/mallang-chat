@@ -72,6 +72,7 @@ body {
 .chatlist-header {
   background: white;
   padding: 1rem 1.2rem;
+  padding-top: max(1rem, env(safe-area-inset-top, 1rem));
   border-bottom: 1px solid #E5E5E5;
   display: flex;
   justify-content: space-between;
@@ -151,6 +152,7 @@ body {
 .chatroom-header {
   background: white;
   padding: 0.8rem 1rem;
+  padding-top: max(0.8rem, env(safe-area-inset-top, 0.8rem));
   border-bottom: 1px solid #E5E5E5;
   display: flex;
   align-items: center;
@@ -2398,11 +2400,12 @@ function autoResize(el) {
 // 이벤트 리스너
 document.getElementById('chatInput').addEventListener('input', function() { autoResize(this); });
 document.getElementById('staffInput').addEventListener('input', function() { autoResize(this); });
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 document.getElementById('chatInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendChatMsg(); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !isMobile) { e.preventDefault(); sendChatMsg(); }
 });
 document.getElementById('staffInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendStaffMsg(); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !isMobile) { e.preventDefault(); sendStaffMsg(); }
 });
 document.getElementById('loginPw').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();

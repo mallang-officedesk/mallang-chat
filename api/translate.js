@@ -52,6 +52,7 @@ ${contextInfo}
 
 규칙:
 - 번역 결과만 출력 (설명, 인사, 답변 금지)
+- 美妆 is NOT correct for makeup - always use 化妆 for makeup in Chinese
 - MALLANG, PayPal, WeChat, Instagram, 小红书 등 고유명사 유지
 - URL, [CENTER], [WECHAT_QR], [DIRECTIONS_BTN], [INSTAGRAM_BTN], [XIAOHONGSHU_BTN] 태그 유지
 - 숫자, 가격(₩, won, USD, 円), 날짜, 시간 유지
